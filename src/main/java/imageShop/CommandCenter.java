@@ -2,6 +2,8 @@ package imageShop;
 
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.image.WritableImage;
+import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 
 import java.util.LinkedList;
@@ -10,6 +12,9 @@ import java.util.List;
 /**
  * Created by RAM0N on 7/19/16.
  */
+
+
+
 public class CommandCenter {
 
     public static final int MAX_UNDOS = 10;
@@ -53,6 +58,19 @@ public class CommandCenter {
 
     public Image getImage() {
         return mImage;
+    }
+
+    public static Image transformSelection(Image imageIn, ColorTransformer f) {
+        int width = (int) imageIn.getWidth();
+        int height = (int) imageIn.getHeight();
+        WritableImage imageOut = new WritableImage(width, height);
+        for (int x = 0; x < width; x++) {
+            for (int y = 0; y < height; y++) {
+                imageOut.getPixelWriter().setColor(x, y,
+                        f.apply(x, y, imageIn.getPixelReader().getColor(x, y)));
+            }
+        }
+        return imageOut;
     }
 
 

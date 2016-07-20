@@ -58,8 +58,8 @@ public class Controller implements Initializable{
     @FXML private Slider sldrSize;
 
     @FXML void menuOpenAction(ActionEvent event) {
-        // is this line needed?
-        // CommandCenter.getInstance().setImageView(this.mImageView);
+
+        CommandCenter.getInstance().setImageView(this.mImageView);
 
         // create a new file chooser
         FileChooser fileChooser = new FileChooser();
@@ -73,8 +73,12 @@ public class Controller implements Initializable{
         File file = fileChooser.showOpenDialog(null);
         try {
             BufferedImage bufferedImage = ImageIO.read(file);
+            //Image image = SwingFXUtils.toFXImage(bufferedImage, null);
+            //mImageView.setImage(image);
             CommandCenter.getInstance().setImageAndRefreshView(SwingFXUtils.toFXImage(bufferedImage, null));
-        } catch (IOException e) {
+        } catch (Exception e) {
+           // Logger.getLogger(Controller.class.getName()).log(Level.SEVERE, null, e);
+
             System.out.println("there was an error loading the image file: ");
             System.out.println("  " + e);
         }
@@ -160,23 +164,28 @@ public class Controller implements Initializable{
                     wPos = mouseEvent.getX();
                     hPos = mouseEvent.getY();
 
-                    Image transformImage;
-
-                    // update to handle filters
-                    // pass filter type as param?
+                    Image currentImage = CommandCenter.getInstance().getImage();
+                    Image transformImage = currentImage;
 
                     if (mFilterStyle == FilterStyle.DRK) {
-
+                        transformImage = CommandCenter.getInstance().transformSelection(currentImage,
+                                (x, y, c) -> (x > xPos && x < wPos) && (y > yPos && y < hPos) ?
+                                        c.deriveColor(0.0, 1.0, 0.5, 1.0) : c);
                     } else if (mFilterStyle == FilterStyle.SAT) {
+                        transformImage = CommandCenter.getInstance().transformSelection(currentImage,
+                                (x, y, c) -> (x > xPos && x < wPos) && (y > yPos && y < hPos) ?
+                                        c.deriveColor(0.0, 1.0 / 0.1, 1.0, 1.0) : c);
 
                     }
+
+                    CommandCenter.getInstance().setImageAndRefreshView(transformImage);
                 }
 
                 mouseEvent.consume();
             }
         });
 
-
+        // draw if mouse is dragged while pen is selected
         mImageView.addEventFilter(MouseEvent.MOUSE_DRAGGED, new EventHandler<MouseEvent>() {
             @Override
             public void handle(MouseEvent mouseEvent) {
@@ -201,7 +210,7 @@ public class Controller implements Initializable{
             }
         });
 
-
+        // update size of pen based on slider
         sldrSize.valueProperty().addListener(new ChangeListener<Number>() {
             @Override
             public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
@@ -210,9 +219,9 @@ public class Controller implements Initializable{
             }
         });
 
-
-
     }
+
+
 
     // helper method to get the shape of the pen
     private Shape getShape() {

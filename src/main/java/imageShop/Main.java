@@ -19,14 +19,16 @@ public class Main extends Application {
     public void start(Stage stage) throws Exception {
 
 
-        String fxmlFile = "/fxml/hello.fxml";
+        String fxmlFile = "/fxml/imageShop.fxml";
         FXMLLoader loader = new FXMLLoader();
         Parent rootNode = loader.load(getClass().getResourceAsStream(fxmlFile));
         Scene scene = new Scene(rootNode, 400, 200);
         scene.getStylesheets().add("/styles/styles.css");
-        stage.setTitle("Hello JavaFX and Maven");
+        stage.setTitle("Picture This");
         stage.setScene(scene);
         stage.show();
+
+        CommandCenter.getInstance().setMainStage(stage);
 
 
     }
