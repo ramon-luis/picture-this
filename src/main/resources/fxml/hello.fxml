@@ -5,7 +5,7 @@
 <?import javafx.scene.control.*?>
 <?import org.tbee.javafx.scene.layout.fxml.MigPane?>
 
-<MigPane id="rootPane" fx:controller="imageShop.HelloController"
+<MigPane id="rootPane" fx:controller="imageShop.Controller"
         styleClass="main-panel" 
         layout="insets 20"
         cols="[label, pref!][grow, 50::]"
