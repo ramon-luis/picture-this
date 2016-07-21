@@ -4,10 +4,10 @@ import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.event.ActionEvent;
-import javafx.event.Event;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.scene.effect.ColorAdjust;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.shape.*;
 import javafx.geometry.Rectangle2D;
@@ -23,7 +23,6 @@ import javafx.stage.FileChooser;
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.File;
-import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.ResourceBundle;
@@ -42,8 +41,11 @@ public class Controller implements Initializable{
     private Pen penStyle = Pen.CIR;
     private FilterStyle mFilterStyle = FilterStyle.DRK;
 
+    private Rectangle mRectangle;
     private double xPos, yPos, hPos, wPos;
+    private boolean mUserIsCurrentlySelecting = false;
     private Color mColor = Color.WHITE;
+
 
     private ArrayList<Shape> removeShapes = new ArrayList<>(1000);
 
@@ -54,8 +56,22 @@ public class Controller implements Initializable{
     @FXML private ToggleButton tgbCircle;
     @FXML private ToggleButton tgbFilter;
     // ADD MORE SHAPES???
+
+    @FXML private MenuButton menuTouchUp;
+
     @FXML private ColorPicker cpkColor;
-    @FXML private Slider sldrSize;
+    @FXML private Slider sldSize;
+    @FXML private Slider sldBrightness;
+    @FXML private Slider sldContrast;
+    @FXML private Slider sldHue;
+    @FXML private Slider sldSaturate;
+
+    @FXML private Button btnResetBrightness;
+    @FXML private Button btnResetContrast;
+    @FXML private Button btnResetHue;
+    @FXML private Button btnResetSaturate;
+
+
 
     @FXML void menuOpenAction(ActionEvent event) {
 
@@ -73,9 +89,10 @@ public class Controller implements Initializable{
         File file = fileChooser.showOpenDialog(null);
         try {
             BufferedImage bufferedImage = ImageIO.read(file);
-            //Image image = SwingFXUtils.toFXImage(bufferedImage, null);
-            //mImageView.setImage(image);
-            CommandCenter.getInstance().setImageAndRefreshView(SwingFXUtils.toFXImage(bufferedImage, null));
+            Image image = SwingFXUtils.toFXImage(bufferedImage, null);
+            ImageData imageData = new ImageData(image, 0, 0, 0, 0);
+            CommandCenter.getInstance().setImageDataAndRefreshView(imageData);
+            //CommandCenter.getInstance().setImageDataAndRefreshView__OLD(imageData);
         } catch (Exception e) {
            // Logger.getLogger(Controller.class.getName()).log(Level.SEVERE, null, e);
 
@@ -98,6 +115,24 @@ public class Controller implements Initializable{
 
     @FXML void menuQuitAction() {
         System.exit(0);
+    }
+
+    @FXML void menuUndoAction(ActionEvent event) {
+        CommandCenter.getInstance().undo();
+        ImageData imageData = CommandCenter.getInstance().getImageData();
+        sldBrightness.setValue(imageData.getBrightness());
+        sldContrast.setValue(imageData.getContrast());
+        sldHue.setValue(imageData.getHue());
+        sldSaturate.setValue(imageData.getSaturation());
+    }
+
+    @FXML void menuRedoAction(ActionEvent event) {
+        CommandCenter.getInstance().redo();
+        ImageData imageData = CommandCenter.getInstance().getImageData();
+        sldBrightness.setValue(imageData.getBrightness());
+        sldContrast.setValue(imageData.getContrast());
+        sldHue.setValue(imageData.getHue());
+        sldSaturate.setValue(imageData.getSaturation());
     }
 
     // undo
@@ -138,8 +173,19 @@ public class Controller implements Initializable{
             @Override
             public void handle(MouseEvent mouseEvent) {
                 if (penStyle == Pen.FIL) {
-                    xPos = mouseEvent.getX();
-                    yPos = mouseEvent.getY();
+                    if (mUserIsCurrentlySelecting) {
+                        mAnchorPane.getChildren().remove(mRectangle);
+                        mUserIsCurrentlySelecting = false;
+                    } else {
+                        xPos = mouseEvent.getX();
+                        yPos = mouseEvent.getY();
+                        mRectangle = new Rectangle();
+                        mRectangle.setFill(Color.SNOW);
+                        mRectangle.setStroke(Color.WHITE);
+                        mRectangle.setOpacity(0.15);
+                        mAnchorPane.getChildren().add(mRectangle);
+                        mUserIsCurrentlySelecting = true;
+                    }
                 }
 
                 mouseEvent.consume();
@@ -152,33 +198,37 @@ public class Controller implements Initializable{
             public void handle(MouseEvent mouseEvent) {
 
                 if (penStyle == Pen.CIR || penStyle == Pen.SQR) {
-
-                    SnapshotParameters snapshotParameters = new SnapshotParameters();
-                    snapshotParameters.setViewport(new Rectangle2D(0, 0, mImageView.getFitWidth(), mImageView.getFitHeight()));
-                    Image snapshot = mAnchorPane.snapshot(snapshotParameters, null);
-                    CommandCenter.getInstance().setImageAndRefreshView(snapshot);
+                    ImageData imageData = getImageData();
+                    CommandCenter.getInstance().updateBackImageData();
+                    CommandCenter.getInstance().setImageDataAndRefreshView(imageData);
+                    //CommandCenter.getInstance().setImageDataAndRefreshView__OLD(imageData);
                     mAnchorPane.getChildren().removeAll(removeShapes);
                     removeShapes.clear();
-                } else if (penStyle == Pen.FIL) {
+
+                } else if (penStyle == Pen.FIL && mUserIsCurrentlySelecting) {
 
                     wPos = mouseEvent.getX();
                     hPos = mouseEvent.getY();
 
-                    Image currentImage = CommandCenter.getInstance().getImage();
-                    Image transformImage = currentImage;
+                    updateRectangle(xPos, yPos, wPos, hPos);
 
-                    if (mFilterStyle == FilterStyle.DRK) {
-                        transformImage = CommandCenter.getInstance().transformSelection(currentImage,
-                                (x, y, c) -> (x > xPos && x < wPos) && (y > yPos && y < hPos) ?
-                                        c.deriveColor(0.0, 1.0, 0.5, 1.0) : c);
-                    } else if (mFilterStyle == FilterStyle.SAT) {
-                        transformImage = CommandCenter.getInstance().transformSelection(currentImage,
-                                (x, y, c) -> (x > xPos && x < wPos) && (y > yPos && y < hPos) ?
-                                        c.deriveColor(0.0, 1.0 / 0.1, 1.0, 1.0) : c);
+//                    Image currentImage = CommandCenter.getInstance().getImage();
+//                    Image transformImage = currentImage;
+//
+//                    if (mFilterStyle == FilterStyle.DRK) {
+//                        transformImage = CommandCenter.getInstance().transformSelection(currentImage,
+//                                (x, y, c) -> (x > xPos && x < wPos) && (y > yPos && y < hPos) ?
+//                                        c.deriveColor(0.0, 1.0, 0.5, 1.0) : c);
+//                    } else if (mFilterStyle == FilterStyle.SAT) {
+//                        transformImage = CommandCenter.getInstance().transformSelection(currentImage,
+//                                (x, y, c) -> (x > xPos && x < wPos) && (y > yPos && y < hPos) ?
+//                                        c.deriveColor(0.0, 1.0 / 0.1, 1.0, 1.0) : c);
+//
+//                    }
+//                    CommandCenter.getInstance().setImageDataAndRefreshView__OLD(transformImage);
 
-                    }
+                    System.out.println("finished rectangle");
 
-                    CommandCenter.getInstance().setImageAndRefreshView(transformImage);
                 }
 
                 mouseEvent.consume();
@@ -189,15 +239,17 @@ public class Controller implements Initializable{
         mImageView.addEventFilter(MouseEvent.MOUSE_DRAGGED, new EventHandler<MouseEvent>() {
             @Override
             public void handle(MouseEvent mouseEvent) {
-
                 if (penStyle == Pen.CIR || penStyle == Pen.SQR) {
                     xPos = mouseEvent.getX();
                     yPos = mouseEvent.getY();
-                    Shape shape = getShape();
-                    mAnchorPane.getChildren().add(shape);
-                    removeShapes.add(shape);
+                    Shape penShape = getPenShape();
+                    mAnchorPane.getChildren().add(penShape);
+                    removeShapes.add(penShape);
+                } else if (penStyle == Pen.FIL && mUserIsCurrentlySelecting) {
+                    hPos = mouseEvent.getX();
+                    wPos = mouseEvent.getY();
+                    updateRectangle(xPos, yPos, hPos, wPos);
                 }
-
                 mouseEvent.consume();
             }
         });
@@ -211,7 +263,7 @@ public class Controller implements Initializable{
         });
 
         // update size of pen based on slider
-        sldrSize.valueProperty().addListener(new ChangeListener<Number>() {
+        sldSize.valueProperty().addListener(new ChangeListener<Number>() {
             @Override
             public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
                 double temp = (Double) newValue;
@@ -219,20 +271,240 @@ public class Controller implements Initializable{
             }
         });
 
+        // store the current image when saturation slider is clicked (for undo)
+        sldSaturate.addEventFilter(MouseEvent.MOUSE_CLICKED, new EventHandler<MouseEvent>() {
+            @Override
+            public void handle(MouseEvent event) {
+                ImageData imageData = getImageData();
+                CommandCenter.getInstance().addBackImageData(imageData);
+            }
+        });
+
+        // update the image in command center when saturation slider is released
+        sldSaturate.addEventFilter(MouseEvent.MOUSE_RELEASED, new EventHandler<MouseEvent>() {
+            @Override
+            public void handle(MouseEvent event) {
+                System.out.println("slider released");
+                ImageData imageData = getImageData();
+                CommandCenter.getInstance().setImageDataAndRefreshView(imageData);
+            }
+        });
+
+        // change the view of the image when slider value is adjusted
+        sldSaturate.valueProperty().addListener(new ChangeListener<Number>() {
+            @Override
+            public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
+                double dSliderValue = (Double) newValue / 100;
+                ColorAdjust colorAdjust = new ColorAdjust();
+                colorAdjust.setSaturation(dSliderValue);
+                mImageView.setEffect(colorAdjust);
+            }
+        });
+
+        // reset saturation to zero
+        btnResetSaturate.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent event) {
+                // store the current image
+                CommandCenter.getInstance().updateBackImageData();
+
+                // reset to zero and update
+                sldSaturate.setValue(0.0);
+                ImageData imageData = getImageData();
+                CommandCenter.getInstance().setImageDataAndRefreshView(imageData);
+
+                // keep menu displayed
+                menuTouchUp.show();
+            }
+        });
+
+        // store the current image when saturation slider is clicked (for undo)
+        sldBrightness.addEventFilter(MouseEvent.MOUSE_CLICKED, new EventHandler<MouseEvent>() {
+            @Override
+            public void handle(MouseEvent event) {
+                ImageData imageData = getImageData();
+                CommandCenter.getInstance().addBackImageData(imageData);
+            }
+        });
+
+        // update the image in command center when brightness slider is released
+        sldBrightness.addEventFilter(MouseEvent.MOUSE_RELEASED, new EventHandler<MouseEvent>() {
+            @Override
+            public void handle(MouseEvent event) {
+                System.out.println("slider released");
+                ImageData imageData = getImageData();
+                CommandCenter.getInstance().setImageDataAndRefreshView(imageData);
+            }
+        });
+
+        sldBrightness.valueProperty().addListener(new ChangeListener<Number>() {
+            @Override
+            public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
+                double dSliderValue = (Double) newValue / 100;
+                ColorAdjust colorAdjust = new ColorAdjust();
+                colorAdjust.setBrightness(dSliderValue);
+                mImageView.setEffect(colorAdjust);
+            }
+        });
+
+        btnResetBrightness.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent event) {
+                // store the current image
+                CommandCenter.getInstance().updateBackImageData();
+
+                // reset to zero and update
+                sldBrightness.setValue(0.0);
+                ImageData imageData = getImageData();
+                CommandCenter.getInstance().setImageDataAndRefreshView(imageData);
+
+                // keep menu displayed
+                menuTouchUp.show();
+            }
+        });
+
+        // store the current image when saturation slider is clicked (for undo)
+        sldContrast.addEventFilter(MouseEvent.MOUSE_CLICKED, new EventHandler<MouseEvent>() {
+            @Override
+            public void handle(MouseEvent event) {
+                ImageData imageData = getImageData();
+                CommandCenter.getInstance().addBackImageData(imageData);
+            }
+        });
+
+        // update the image in command center when contrast slider is released
+        sldContrast.addEventFilter(MouseEvent.MOUSE_RELEASED, new EventHandler<MouseEvent>() {
+            @Override
+            public void handle(MouseEvent event) {
+                System.out.println("slider released");
+                ImageData imageData = getImageData();
+                CommandCenter.getInstance().setImageDataAndRefreshView(imageData);
+            }
+        });
+
+        sldContrast.valueProperty().addListener(new ChangeListener<Number>() {
+            @Override
+            public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
+                double dSliderValue = (Double) newValue / 100;
+                ColorAdjust colorAdjust = new ColorAdjust();
+                colorAdjust.setContrast(dSliderValue);
+                mImageView.setEffect(colorAdjust);
+            }
+        });
+
+        btnResetContrast.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent event) {
+                // store the current image
+                CommandCenter.getInstance().updateBackImageData();
+
+                // reset to zero and update
+                sldContrast.setValue(0.0);
+                ImageData imageData = getImageData();
+                CommandCenter.getInstance().setImageDataAndRefreshView(imageData);
+
+                // keep menu displayed
+                menuTouchUp.show();
+
+            }
+        });
+
+
+        // store the current image when saturation slider is clicked (for undo)
+        sldHue.addEventFilter(MouseEvent.MOUSE_CLICKED, new EventHandler<MouseEvent>() {
+            @Override
+            public void handle(MouseEvent event) {
+                ImageData imageData = getImageData();
+                CommandCenter.getInstance().addBackImageData(imageData);
+            }
+        });
+
+        // update the image in command center when hue slider is released
+        sldHue.addEventFilter(MouseEvent.MOUSE_RELEASED, new EventHandler<MouseEvent>() {
+            @Override
+            public void handle(MouseEvent event) {
+                System.out.println("slider released");
+                ImageData imageData = getImageData();
+                CommandCenter.getInstance().setImageDataAndRefreshView(imageData);
+            }
+        });
+
+        sldHue.valueProperty().addListener(new ChangeListener<Number>() {
+            @Override
+            public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
+                double dSliderValue = (Double) newValue / 100;
+                ColorAdjust colorAdjust = new ColorAdjust();
+                colorAdjust.setHue(dSliderValue);
+                mImageView.setEffect(colorAdjust);
+            }
+        });
+
+        btnResetHue.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent event) {
+                // store the current image
+                CommandCenter.getInstance().updateBackImageData();
+
+                // reset to zero and update
+                sldHue.setValue(0.0);
+                //ImageData imageData = getImageData();
+                //CommandCenter.getInstance().setImageDataAndRefreshView(imageData);
+
+                // keep menu displayed
+                menuTouchUp.show();
+
+            }
+        });
+
+
     }
 
+    private ImageData getImageData() {
+        // get the image
+        SnapshotParameters snapshotParameters = new SnapshotParameters();
+        snapshotParameters.setViewport(new Rectangle2D(0, 0, mImageView.getFitWidth(), mImageView.getFitHeight()));
+        Image snapshot = mAnchorPane.snapshot(snapshotParameters, null);
 
+        // get the slider values for image qualities
+        double dBrightness = sldBrightness.getValue();
+        double dContrast = sldContrast.getValue();
+        double dHue = sldHue.getValue();
+        double dSaturation = sldSaturate.getValue();
+
+        // return an image data object
+        return new ImageData(snapshot, dBrightness, dContrast, dHue, dSaturation);
+    }
 
     // helper method to get the shape of the pen
-    private Shape getShape() {
-        Shape shape = null;
+    private Shape getPenShape() {
+        Shape penShape = null;
         if (penStyle == Pen.CIR) {
-            shape = new Circle(xPos, yPos, penSize);
+            penShape = new Circle(xPos, yPos, penSize);
         } else if (penStyle == Pen.SQR) {
-            shape = new Rectangle(xPos, yPos, penSize, penSize);
+            penShape = new Rectangle(xPos, yPos, penSize, penSize);
         }
-        shape.setFill(mColor);
-        return shape;
+        penShape.setFill(mColor);
+        return penShape;
+    }
+
+    private void updateRectangle(double dStartX, double dStartY, double dEndX, double dEndY) {
+
+        // check if x and y are inverted
+        boolean bIsInvertedH = dEndX < dStartX;
+        boolean bIsInvertedV = dEndY < dStartY;
+
+        // set the x, y, width, and height
+        double dX = !bIsInvertedH ? dStartX: dEndX;
+        double dY = !bIsInvertedV ? dStartY : dEndY;
+        double dWidth = !bIsInvertedH ? (dEndX - dStartX) : (dStartX - dEndX);
+        double dHeight = !bIsInvertedV ? (dEndY - dStartY) : (dStartY - dEndY);
+
+        // update rectangle
+        mRectangle.setX(dX);
+        mRectangle.setY(dY);
+        mRectangle.setWidth(dWidth);
+        mRectangle.setHeight(dHeight);
+
     }
 
 

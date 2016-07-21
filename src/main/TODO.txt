@@ -1,6 +1,26 @@
 TODO
 
-1. undo & redo
+sliders change pic
+click APPLY:
+  -previous CC instance image is added to redo
+  -current image is updated as new image on CC instance
+  -sliders are reset to zero
+click CANCEL:
+  -sliders are reset to zero
+
+what if menu closes? - keep as is (no undo since not applied)
+what if draw over changes? - keep as is (old image w/out slider will undo)
+
+redo ImageStack as single images
+keep setImageAndRefresh as previously coded
+
+if box is selected, then only box is updated?
+
+add color picker
+add paint bucket to box
+
+
+1. undo & redo - DONE
 2. change drag mouse to select:
         white box that highlights area -> choose to apply filter
 3. filters:
@@ -13,9 +33,11 @@ TODO
         about
         undo
         redo
-5. create toolbar
 6. dropper - select color
 7. bucket - paint color to area
+
+REFACTOR
+no actions available if imageview is empty
 
 SEE PIXLR EXPRESS FOR IDEAS
 

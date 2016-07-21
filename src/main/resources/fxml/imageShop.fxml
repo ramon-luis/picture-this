@@ -8,7 +8,7 @@
 <?import javafx.scene.paint.*?>
 <?import javafx.scene.text.*?>
 
-<VBox prefHeight="862.0" prefWidth="1328.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="imageShop.Controller">
+<VBox prefHeight="500.0" prefWidth="1100.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="imageShop.Controller">
     <children>
         <MenuBar VBox.vgrow="NEVER">
             <menus>
@@ -31,8 +31,8 @@
                 </Menu>
                 <Menu mnemonicParsing="false" text="Filter">
                     <items>
-                        <!--<MenuItem mnemonicParsing="false" onAction="#menuUndoAction" text="Undo" />-->
-                        <!--<MenuItem mnemonicParsing="false" onAction="#menuRedo" text="Redo" />-->
+                        <MenuItem mnemonicParsing="false" onAction="#menuUndoAction" text="Undo" />
+                        <MenuItem mnemonicParsing="false" onAction="#menuRedoAction" text="Redo" />
                         <SeparatorMenuItem mnemonicParsing="false" />
                         <MenuItem mnemonicParsing="false" text="Cut" />
                         <MenuItem mnemonicParsing="false" text="Copy" />
@@ -54,14 +54,90 @@
         </MenuBar>
         <ToolBar prefHeight="40.0" prefWidth="1328.0">
             <items>
+            <Label layoutX="103.0" layoutY="15.0" text="color:" />
                 <ColorPicker fx:id="cpkColor" />
-                <Label text="Pen-Size" />
-                <Slider fx:id="sldrSize" value="50.0" />
-                <Label text="Filter" />
-                <!--<ComboBox fx:id="cboSome" prefWidth="150.0" />-->
-                <ToggleButton fx:id="tgbFilter" mnemonicParsing="false" text="Apply-Filter" />
+                <Label text="pen size:" />
+                <Slider fx:id="sldSize" value="50.0" />
+                <Label text="pen shape:" />
                 <ToggleButton fx:id="tgbCircle" mnemonicParsing="false" text="Circle" />
                 <ToggleButton fx:id="tgbSquare" mnemonicParsing="false" text="Square" />
+            <MenuButton fx:id="menuTouchUp" mnemonicParsing="false" text="Touch Up">
+              <items>
+                <MenuItem mnemonicParsing="false">
+                     <graphic>
+                        <HBox>
+                           <children>
+                              <Text strokeType="OUTSIDE" strokeWidth="0.0" text="Brightness">
+                                 <font>
+                                    <Font name="System Bold" size="13.0" />
+                                 </font>
+                              </Text>
+                              <Slider fx:id="sldBrightness" min="-100.0" />
+                              <Button fx:id="btnResetBrightness" mnemonicParsing="false" text="Reset" />
+                           </children>
+                        </HBox>
+                     </graphic>
+                  </MenuItem>
+                  <MenuItem mnemonicParsing="false">
+                     <graphic>
+                        <HBox>
+                           <children>
+                              <Text strokeType="OUTSIDE" strokeWidth="0.0" text="Contrast    ">
+                                 <font>
+                                    <Font name="System Bold" size="13.0" />
+                                 </font>
+                              </Text>
+                              <Slider fx:id="sldContrast" min="-100.0" />
+                              <Button fx:id="btnResetContrast" mnemonicParsing="false" text="Reset" />
+                           </children>
+                        </HBox>
+                     </graphic>
+                  </MenuItem>
+                  <MenuItem mnemonicParsing="false">
+                     <graphic>
+                        <HBox>
+                           <children>
+                              <Text strokeType="OUTSIDE" strokeWidth="0.0" text="Hue              ">
+                                 <font>
+                                    <Font name="System Bold" size="13.0" />
+                                 </font>
+                              </Text>
+                              <Slider fx:id="sldHue" min="-100.0" />
+                              <Button fx:id="btnResetHue" mnemonicParsing="false" text="Reset" />
+                           </children>
+                        </HBox>
+                     </graphic>
+                  </MenuItem>
+                <MenuItem mnemonicParsing="false">
+                     <graphic>
+                        <HBox>
+                           <children>
+                              <Text strokeType="OUTSIDE" strokeWidth="0.0" text="Saturate     ">
+                                 <font>
+                                    <Font name="System Bold" size="13.0" />
+                                 </font>
+                              </Text>
+                              <Slider fx:id="sldSaturate" min="-100.0" />
+                              <Button fx:id="btnResetSaturate" mnemonicParsing="false" text="Reset" />
+                           </children>
+                        </HBox>
+                     </graphic>
+                  </MenuItem>
+                  <MenuItem mnemonicParsing="false">
+                     <graphic>
+                        <HBox prefHeight="100.0" prefWidth="200.0">
+                           <children>
+                              <Button fx:id="btnApply" mnemonicParsing="false" text="Apply" />
+                              <Button fx:id="btnCancel" mnemonicParsing="false" text="Cancel" />
+                           </children>
+                        </HBox>
+                     </graphic>
+                  </MenuItem>
+              </items>
+            </MenuButton>
+            <Label layoutX="307.0" layoutY="15.0" text="Filter" />
+                <!--<ComboBox fx:id="cboSome" prefWidth="150.0" />-->
+                <ToggleButton fx:id="tgbFilter" mnemonicParsing="false" text="Select Area to Edit" />
             </items>
         </ToolBar>
         <ScrollPane prefHeight="835.0" prefWidth="1328.0">

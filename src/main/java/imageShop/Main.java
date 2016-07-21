@@ -18,11 +18,10 @@ public class Main extends Application {
 
     public void start(Stage stage) throws Exception {
 
-
         String fxmlFile = "/fxml/imageShop.fxml";
         FXMLLoader loader = new FXMLLoader();
         Parent rootNode = loader.load(getClass().getResourceAsStream(fxmlFile));
-        Scene scene = new Scene(rootNode, 400, 200);
+        Scene scene = new Scene(rootNode, 1200, 600);
         scene.getStylesheets().add("/styles/styles.css");
         stage.setTitle("Picture This");
         stage.setScene(scene);
