@@ -5,6 +5,9 @@ import javafx.scene.image.ImageView;
 import javafx.scene.image.WritableImage;
 import javafx.stage.Stage;
 
+import java.io.File;
+import java.util.List;
+
 /**
  * Created by RAM0N on 7/19/16.
  */
@@ -13,15 +16,15 @@ import javafx.stage.Stage;
 
 public class CommandCenter {
 
-    public static final int MAX_UNDO_ACTIONS = 20;
+    public static final int MAX_UNDO_COUNT = 20;
+    public static final int MAX_RECENT_FILE_COUNT = 5;
 
     private static CommandCenter stateManager;
     private Stage mMainStage, mSaturationStage;
     private ImageView mImageView;
-    private ImageData mImageData;
     private Image mImage;
-    private double mBrightness, mContrast, mHue, mSaturation;
-    private static ImageDataStack sBackImageData, sForwardImageData;
+    private static MaxSizeStack<Image> sBackImages, sForwardImages;
+    private static MaxSizeStack<File> sRecentFiles;
 
 
     // private constructor
@@ -31,8 +34,10 @@ public class CommandCenter {
     public static CommandCenter getInstance() {
         if (stateManager == null) {
             stateManager = new CommandCenter();
-            sBackImageData = new ImageDataStack(MAX_UNDO_ACTIONS);
-            sForwardImageData = new ImageDataStack(MAX_UNDO_ACTIONS);
+            sBackImages = new MaxSizeStack<>(MAX_UNDO_COUNT);
+            sForwardImages = new MaxSizeStack<>(MAX_UNDO_COUNT);
+            sRecentFiles = new MaxSizeStack<>(MAX_RECENT_FILE_COUNT);
+
         }
         return stateManager;
     }
@@ -47,64 +52,63 @@ public class CommandCenter {
 
     public void closeImage() {
         mImageView.setImage(null);
+        sBackImages.clear();  // clear the list of undo images
+        sForwardImages.clear();  // clear the list of redo images
     }
 
-    public void setImageDataAndRefreshView__OLD(ImageData imageData) {
-        if (this.mImageData != null) {
-            sBackImageData.push(this.mImageData);  // add current image to back list for undo
-        }
-        this.mImageData = imageData;
-        mImageView.setImage(mImageData.getImage());
-
+    public void setImageAndView(Image image) {
+        this.mImage = image;
+        this.mImageView.setImage(image);
     }
 
-    public void updateBackImageData() {
-        if (this.mImageData != null) {
-            sBackImageData.push(this.mImageData);  // add current image to back list for undo
-            System.out.println("back image data added.");
-            System.out.println(mImageData);
+    public void storeLastImageAsUndo() {
+        if (this.mImage != null) {
+            sBackImages.push(this.mImage);
         }
     }
 
-    public void setImageDataAndRefreshView(ImageData imageData) {
-        this.mImageData = imageData;
-        mImageView.setImage(mImageData.getImage());
+    public void addUndoImage(Image image) {
+        sBackImages.push(image);
     }
 
-    public void addBackImageData(ImageData imageData) {
-        sBackImageData.push(imageData);
-        System.out.println("back image data added.");
-        System.out.println(mImageData);
-    }
-
-
-    public ImageData getImageData() {
-        return mImageData;
-    }
-    public Image getImage() {
-        return mImage;
-    }
-
-    public void undo() {
-        // only undo if there is a history of back images
-        if (!sBackImageData.isEmpty()) {
-            sForwardImageData.push(this.mImageData);  // add current images to forward list for redo action
-            ImageData undoImageData = sBackImageData.pop(); // pop off most recent image
-            this.mImageData = undoImageData;  // update current image
-            mImageView.setImage(this.mImageData.getImage());  // set the imageview
+    public Image getUndoImage() {
+        if (sBackImages.isEmpty()) {
+            throw new IndexOutOfBoundsException("cannot get undo image from empty list");
         }
+        return sBackImages.pop();
     }
 
-    public void redo() {
-        // only redo if there is a history of forward images
-        if (!sForwardImageData.isEmpty()) {
-            sBackImageData.push(this.mImageData);  // add current images to back list for undo action
-            ImageData redoImageData = sForwardImageData.pop();  // pop off top image
-            this.mImageData = redoImageData;  // update current image
-            mImageView.setImage(this.mImageData.getImage());  // set the imageview
+    public boolean hasUndoImage() {
+        return !sBackImages.isEmpty();
+    }
+
+    public void addRedoImage(Image image) {
+        sForwardImages.push(image);
+    }
+
+    public Image getRedoImage() {
+        if (sForwardImages.isEmpty()) {
+            throw  new IndexOutOfBoundsException("cannot get redo image from empty list");
         }
+        return sForwardImages.pop();
     }
 
+    public boolean hasRedoImages() {
+        return !sForwardImages.isEmpty();
+    }
+
+
+    public void addRecentFile(File file) {
+        sRecentFiles.push(file);
+    }
+
+    public File getRecentFile() {
+        return sRecentFiles.pop();
+    }
+
+    public List<File> getRecentFiles() {
+        return sRecentFiles.getAsLinkedList();
+    }
 
     public static Image transformSelection(Image imageIn, ColorTransformer f) {
         int width = (int) imageIn.getWidth();
@@ -119,5 +123,31 @@ public class CommandCenter {
         return imageOut;
     }
 
+
+    //    public void undo() {
+//        // only undo if there is a history of back images
+//        if (!sBackImages.isEmpty()) {
+//            // store the current image in forward images for redo
+//            Image currentImage = this.mImage;
+//            sForwardImages.push(currentImage);
+//
+//            // update with the undo image
+//            Image undoImage = sBackImages.pop();
+//            setImageAndView(undoImage);
+//        }
+//    }
+//
+//    public void redo() {
+//        // only redo if there is a history of forward images
+//        if (!sForwardImages.isEmpty()) {
+//            // store the current image in back images for undo
+//            Image currentImage = this.mImage;
+//            sBackImages.push(currentImage);
+//
+//            // update with the undo image
+//            Image redoImage = sForwardImages.pop();
+//            setImageAndView(redoImage);
+//        }
+//    }
 
 }

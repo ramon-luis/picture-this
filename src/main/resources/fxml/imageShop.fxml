@@ -16,7 +16,14 @@
                     <items>
                         <MenuItem mnemonicParsing="false" text="New" />
                         <MenuItem mnemonicParsing="false" onAction="#menuOpenAction" text="Open…" />
-                        <Menu mnemonicParsing="false" text="Open Recent" />
+                        <Menu fx:id="menuOpenRecent" mnemonicParsing="false" text="Open Recent">
+                     <items>
+                        <MenuItem fx:id="menuRecentFile1" mnemonicParsing="false" onAction="#menuRecentFileAction1" />
+                        <MenuItem fx:id="menuRecentFile2" mnemonicParsing="false" onAction="#menuRecentFileAction2"/>
+                        <MenuItem fx:id="menuRecentFile3" mnemonicParsing="false" onAction="#menuRecentFileAction3"/>
+                        <MenuItem fx:id="menuRecentFile4" mnemonicParsing="false" onAction="#menuRecentFileAction4"/>
+                        <MenuItem fx:id="menuRecentFile5" mnemonicParsing="false" onAction="#menuRecentFileAction5"/>
+                     </items></Menu>
                         <SeparatorMenuItem mnemonicParsing="false" />
                         <MenuItem mnemonicParsing="false" onAction="#menuCloseAction" text="Close" />
                         <MenuItem mnemonicParsing="false" onAction="#menuSaveAction" text="Save" />
@@ -125,12 +132,12 @@
                   </MenuItem>
                   <MenuItem mnemonicParsing="false">
                      <graphic>
-                        <HBox prefHeight="100.0" prefWidth="200.0">
-                           <children>
-                              <Button fx:id="btnApply" mnemonicParsing="false" text="Apply" />
-                              <Button fx:id="btnCancel" mnemonicParsing="false" text="Cancel" />
-                           </children>
-                        </HBox>
+                        <Button fx:id="btnApply" alignment="CENTER_RIGHT" mnemonicParsing="false" text="Apply" textAlignment="CENTER" />
+                     </graphic>
+                  </MenuItem>
+                  <MenuItem mnemonicParsing="false">
+                     <graphic>
+                        <Button fx:id="btnCancel" alignment="CENTER_RIGHT" mnemonicParsing="false" text="Cancel" textAlignment="CENTER" />
                      </graphic>
                   </MenuItem>
               </items>
