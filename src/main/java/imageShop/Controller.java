@@ -5,6 +5,10 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.*;
+import javafx.scene.Cursor;
+import javafx.scene.control.Button;
+import javafx.scene.control.Menu;
+import javafx.scene.control.MenuItem;
 import javafx.scene.effect.ColorAdjust;
 import javafx.scene.effect.SepiaTone;
 import javafx.scene.image.PixelWriter;
@@ -19,13 +23,16 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
+import javafx.scene.shape.Shape;
 import javafx.stage.FileChooser;
 
 import javafx.scene.paint.Paint;
 import javax.imageio.ImageIO;
+import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileWriter;
+import java.net.URI;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
@@ -45,7 +52,6 @@ public class Controller implements Initializable{
     private static final double DEFAULT_PEN_PRESSURE = 75.0;
     private static final double DEFAULT_EFFECTS_VALUE = 0.0;
 
-
     private ActionSet mActionSet;
     private Color mColor = Color.rgb(25, 150, 255);
     private DrawTool mDrawTool;
@@ -56,9 +62,9 @@ public class Controller implements Initializable{
     private double xPos, yPos, hPos, wPos;
     private boolean mUserIsCurrentlySelecting = false;
     private boolean mUserIsPickingColor = false;
-
     private ColorAdjust mColorAdjust = new ColorAdjust();
     private ArrayList<Shape> removeShapes = new ArrayList<>(1000);
+    private File mCurrentFile;
 
     @FXML private MenuItem menuNew;
     @FXML private MenuItem menuOpen;
@@ -130,18 +136,7 @@ public class Controller implements Initializable{
 
 
     @FXML void menuOpenAction(ActionEvent event) {
-        // create a new file chooser
-        FileChooser fileChooser = new FileChooser();
-
-        // create file extension filters and add them to the file chooser
-        FileChooser.ExtensionFilter extFilterJPG = new FileChooser.ExtensionFilter("JPG files (*.jpg)", "*.JPG");
-        FileChooser.ExtensionFilter extFilterPNG = new FileChooser.ExtensionFilter("PNG files (*.png)", "*.PNG");
-        fileChooser.getExtensionFilters().addAll(extFilterJPG, extFilterPNG);
-
-        // open the file choose dialog box and try to update with the selected image
-        File file = fileChooser.showOpenDialog(null);
-        openImageFile(file);
-        updateRecentFileMenu(file);
+        openFile();
     }
 
     @FXML void menuRecentFileAction1(ActionEvent event) {
@@ -175,32 +170,11 @@ public class Controller implements Initializable{
     }
 
     @FXML void menuSaveAction(ActionEvent event) {
-        throw new RuntimeException("TO DO");
+        save(mCurrentFile);
     }
 
     @FXML void menuSaveAsAction(ActionEvent event) {
-            // create a new file chooser
-            FileChooser fileChooser = new FileChooser();
-
-            // create file extension filters and add them to the file chooser
-            FileChooser.ExtensionFilter extFilterJPG = new FileChooser.ExtensionFilter("JPG files (*.jpg)", "*.JPG");
-            FileChooser.ExtensionFilter extFilterPNG = new FileChooser.ExtensionFilter("PNG files (*.png)", "*.PNG");
-            fileChooser.getExtensionFilters().addAll(extFilterJPG, extFilterPNG);
-
-            // open the file choose dialog box and try to update with the selected image
-            File file = fileChooser.showSaveDialog(null);
-
-            if (file != null) {
-                try {
-                    FileWriter fileWriter = null;
-                    fileWriter = new FileWriter(file);
-                    fileWriter.write(file.getName());
-                    fileWriter.close();
-                } catch (Exception e) {
-                    System.out.println("there was an error loading the image file: ");
-                    System.out.println("  " + e);
-                }
-            }
+            saveAs();
     }
 
     @FXML void menuQuitAction() {
@@ -218,6 +192,10 @@ public class Controller implements Initializable{
     @FXML void menuStartOverAction(ActionEvent event) {
         startOver();
     }
+
+    @FXML void menuHelpAction() {getHelp();}
+
+    @FXML void menuAboutAction() {getAbout();}
 
 
 
@@ -930,6 +908,92 @@ public class Controller implements Initializable{
         CommandCenter.getInstance().clearUndoImages();
         disableUndo();
         disableRedo();
+    }
+
+    // open an image file
+    private void openFile() {
+        // create a new file chooser
+        FileChooser fileChooser = new FileChooser();
+
+        // create file extension filters and add them to the file chooser
+        FileChooser.ExtensionFilter extFilterJPG = new FileChooser.ExtensionFilter("JPG files (*.jpg)", "*.JPG");
+        FileChooser.ExtensionFilter extFilterPNG = new FileChooser.ExtensionFilter("PNG files (*.png)", "*.PNG");
+        fileChooser.getExtensionFilters().addAll(extFilterJPG, extFilterPNG);
+
+        // open the file choose dialog box and try to update with the selected image
+        File file = fileChooser.showOpenDialog(null);
+        if (file != null) {
+            openImageFile(file);
+            updateRecentFileMenu(file);
+            mCurrentFile = file;
+        }
+    }
+
+    private void save(File file) {
+        if (file != null) {
+            try {
+                String sFileExt = getFileExtension(file);
+                Image currentImage = getSnapshot();
+                BufferedImage bufferedImage = SwingFXUtils.fromFXImage(currentImage, null);
+                ImageIO.write(bufferedImage, sFileExt, file);
+                mCurrentFile = file;
+            } catch (Exception e) {
+                System.out.println("there was an error saving the image file: ");
+                System.out.println("  " + e);
+            }
+        } else {
+            saveAs();
+        }
+    }
+
+    // save an image file using save as
+    private void saveAs() {
+        // create a new file chooser
+        FileChooser fileChooser = new FileChooser();
+
+        // create file extension filters and add them to the file chooser
+        FileChooser.ExtensionFilter extFilterJPG = new FileChooser.ExtensionFilter("JPG files (*.jpg)", "*.JPG");
+        FileChooser.ExtensionFilter extFilterPNG = new FileChooser.ExtensionFilter("PNG files (*.png)", "*.PNG");
+        fileChooser.getExtensionFilters().addAll(extFilterJPG, extFilterPNG);
+
+        // open the file choose dialog box and try to update with the selected image
+        File file = fileChooser.showSaveDialog(null);
+        if (file != null) {
+            updateRecentFileMenu(file);
+            save(file);
+        }
+    }
+
+
+    // http://stackoverflow.com/questions/3571223/how-do-i-get-the-file-extension-of-a-file-in-java
+    private String getFileExtension(File file) {
+        String sExtension = "";
+        String fileName = file.getName();
+
+        int i = fileName.lastIndexOf('.');
+        if (i > 0) {
+            sExtension = fileName.substring(i+1);
+        }
+        return sExtension;
+    }
+
+    // get help support
+    private void getHelp() {
+        String Help = "https://xkcd.com/979/";
+        if(Desktop.isDesktopSupported()) {
+            try {
+                Desktop.getDesktop().browse(new URI(Help));
+            } catch (Exception e) {
+                System.out.println("Error opening web browser: ");
+                System.out.println("  " + e);
+            }
+        }
+    }
+
+    // get about info
+    private void getAbout() {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION, "Picture This... " + "\n" + "by Ramon Rodriguez");
+        alert.showAndWait().filter(response -> response == ButtonType.OK);
     }
 
 }

@@ -44,9 +44,9 @@
                 </Menu>
                 <Menu mnemonicParsing="false" text="Help">
                     <items>
-                        <MenuItem fx:id="menuHelp" mnemonicParsing="false" text="Help" />
+                        <MenuItem fx:id="menuHelp" mnemonicParsing="false" onAction="#menuHelpAction" text="Help" />
                   <SeparatorMenuItem mnemonicParsing="false" />
-                  <MenuItem fx:id="menuAbout" mnemonicParsing="false" text="About" />
+                  <MenuItem fx:id="menuAbout" mnemonicParsing="false" onAction="#menuAboutAction" text="About" />
                     </items>
                 </Menu>
             </menus>
