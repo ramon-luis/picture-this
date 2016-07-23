@@ -171,6 +171,7 @@ public class Controller implements Initializable{
 
     @FXML void menuCloseAction(ActionEvent event) {
         CommandCenter.getInstance().closeImage();
+        CommandCenter.getInstance().setOriginalImage(getSnapshot());
     }
 
     @FXML void menuSaveAction(ActionEvent event) {
@@ -214,6 +215,10 @@ public class Controller implements Initializable{
         redo();
     }
 
+    @FXML void menuStartOverAction(ActionEvent event) {
+        startOver();
+    }
+
 
 
     @Override
@@ -227,6 +232,7 @@ public class Controller implements Initializable{
         Image initialImage = getSnapshot();
         mImageView.setImage(initialImage);
         CommandCenter.getInstance().setImageView(mImageView);
+        CommandCenter.getInstance().setOriginalImage(initialImage);
         CommandCenter.getInstance().setImageAndView(initialImage);
 
         // assign toggle groups
@@ -246,6 +252,7 @@ public class Controller implements Initializable{
         hideToolPanel();
         disableRedo();
         disableUndo();
+        enableStartOver();
 
         // **************************************** //
         // **            TOGGLE GROUPS           ** //
@@ -461,6 +468,7 @@ public class Controller implements Initializable{
 
         btnUndo.setOnAction(event -> undo());
         btnRedo.setOnAction(event -> redo());
+        btnStartOver.setOnAction(event -> startOver());
 
         // **************************************** //
         // **           FILTER BUTTONS          ** //
@@ -779,6 +787,8 @@ public class Controller implements Initializable{
 
             // update the application to display the image
             CommandCenter.getInstance().setImageAndView(newImage);
+            CommandCenter.getInstance().setOriginalImage(newImage);
+            enableStartOver();
 
             // no undo or redo -> new file
             CommandCenter.getInstance().clearUndoImages();
@@ -868,6 +878,18 @@ public class Controller implements Initializable{
         btnRedo.setDisable(true);
     }
 
+    // enable start over buttons
+    private void enableStartOver() {
+        menuStartOver.setDisable(false);
+        btnStartOver.setDisable(false);
+    }
+
+    // disable start over buttons
+    private void disableStartOver() {
+        menuStartOver.setDisable(true);
+        btnStartOver.setDisable(true);
+    }
+
     // undo action
     private void undo() {
         if (CommandCenter.getInstance().hasUndoImage()) {
@@ -898,5 +920,16 @@ public class Controller implements Initializable{
         }
     }
 
+    // start over with original image
+    private void startOver() {
+        resetEffectsSliders();
+        Image originalImage = CommandCenter.getInstance().getOriginalImage();
+        CommandCenter.getInstance().setImageAndView(originalImage);
+        mImageView.setImage(originalImage);
+        CommandCenter.getInstance().clearRedoImages();
+        CommandCenter.getInstance().clearUndoImages();
+        disableUndo();
+        disableRedo();
+    }
 
 }

@@ -22,7 +22,7 @@ public class CommandCenter {
     private static CommandCenter stateManager;
     private Stage mMainStage, mSaturationStage;
     private ImageView mImageView;
-    private Image mImage;
+    private Image mImage, mOriginalImage;
     private static MaxSizeStack<Image> sBackImages, sForwardImages;
     private static MaxSizeStack<File> sRecentFiles;
 
@@ -126,6 +126,13 @@ public class CommandCenter {
         return imageOut;
     }
 
+    public Image getOriginalImage() {
+        return mOriginalImage;
+    }
+
+    public void setOriginalImage(Image originalImage) {
+        mOriginalImage = originalImage;
+    }
 
     //    public void undo() {
 //        // only undo if there is a history of back images

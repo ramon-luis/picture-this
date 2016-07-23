@@ -39,7 +39,7 @@
                         <MenuItem fx:id="menuUndo" disable="true" mnemonicParsing="false" onAction="#menuUndoAction" text="Undo" />
                         <MenuItem fx:id="menuRedo" disable="true" mnemonicParsing="false" onAction="#menuRedoAction" text="Redo" />
                   <SeparatorMenuItem mnemonicParsing="false" />
-                  <MenuItem fx:id="menuStartOver" disable="true" mnemonicParsing="false" text="Start Over" />
+                  <MenuItem fx:id="menuStartOver" disable="true" mnemonicParsing="false" onAction="#menuStartOverAction" text="Start Over" />
                     </items>
                 </Menu>
                 <Menu mnemonicParsing="false" text="Help">
