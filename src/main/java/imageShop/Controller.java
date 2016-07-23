@@ -26,15 +26,16 @@ import javafx.scene.shape.Rectangle;
 import javafx.scene.shape.Shape;
 import javafx.stage.FileChooser;
 
-import javafx.scene.paint.Paint;
+import javafx.util.Pair;
+
 import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
-import java.io.FileWriter;
 import java.net.URI;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.ResourceBundle;
 
@@ -331,6 +332,8 @@ public class Controller implements Initializable{
             if (mActionSet == ActionSet.DRAW && mUserIsPickingColor) {
                 pickColorFromDropper(mouseEvent);
             } else if (mActionSet == ActionSet.DRAW && mDrawTool == DrawTool.BUCKET) {
+                CommandCenter.getInstance().storeLastImageAsUndo();
+                enableUndo();
                 fillFromBucket(mouseEvent);
             } else if (mActionSet == ActionSet.DRAW && mDrawTool == DrawTool.PEN && mPenShape != null) {
                 drawPen(mouseEvent);
@@ -359,24 +362,9 @@ public class Controller implements Initializable{
         // mouse released:
         mImageView.addEventFilter(MouseEvent.MOUSE_RELEASED, mouseEvent -> {
             if (mActionSet == ActionSet.DRAW && mDrawTool == DrawTool.PEN && mPenShape != null) {
-                CommandCenter.getInstance().storeLastImageAsUndo();
-                enableUndo();
-
-                Image currentImage = getSnapshot();
-                resetEffectsSliders();
-                CommandCenter.getInstance().setImageAndView(currentImage);
-                mAnchorPane.getChildren().removeAll(removeShapes);
-                removeShapes.clear();
+                updateImageAndProperties();
             } else if (mActionSet == ActionSet.DRAW && mDrawTool == DrawTool.BUCKET) {
-                CommandCenter.getInstance().storeLastImageAsUndo();
-                enableUndo();
-
-                Image currentImage = getSnapshot();
-                resetEffectsSliders();
-                CommandCenter.getInstance().setImageAndView(currentImage);
-                //mAnchorPane.getChildren().removeAll(removeShapes);
-                //removeShapes.clear();
-
+                //
             } else if (mActionSet == ActionSet.EFFECTS && mUserIsCurrentlySelecting) {
                 updateRectangle(mouseEvent);
 
@@ -600,6 +588,16 @@ public class Controller implements Initializable{
         sldSaturate.setValue(DEFAULT_EFFECTS_VALUE);
     }
 
+    private void updateImageAndProperties() {
+        CommandCenter.getInstance().storeLastImageAsUndo();
+        enableUndo();
+        Image currentImage = getSnapshot();
+        resetEffectsSliders();
+        CommandCenter.getInstance().setImageAndView(currentImage);
+        mAnchorPane.getChildren().removeAll(removeShapes);
+        removeShapes.clear();
+    }
+
     // change mouse icon to dropper
     private void setMouseToDropper(MouseEvent mouseEvent) {
         Image dropperImage = new Image(DROPPER_IMAGE, 25, 25, false, false);
@@ -675,7 +673,7 @@ public class Controller implements Initializable{
         xPos = mouseEvent.getX();
         yPos = mouseEvent.getY();
         Color targetColor = mImageView.getImage().getPixelReader().getColor((int) xPos, (int) yPos);
-        fillRecursive((int) xPos, (int) yPos, targetColor);
+        updatePixelColorsBFS((int) xPos, (int) yPos, targetColor);
     }
 
     // check if pixel address is within image
@@ -690,14 +688,63 @@ public class Controller implements Initializable{
         return mImageView.getImage().getPixelReader().getColor(iPixelX, iPixelY).equals(targetColor);
     }
 
-    // recursive call to fill across all pixels that touch and are same color
-    private void fillRecursive(int iPixelX, int iPixelY, Color targetColor) {
-        if (isPixelInBounds(iPixelX, iPixelY) && isMatchingColorPixel(iPixelX, iPixelY, targetColor)) {
+    // fill across all pixels that touch and are same color
+    private void updatePixelColorsBFS(int iPixelX, int iPixelY, Color targetColor) {
+        // get max int for a pixel position
+        int iMaxX = (int) mImageView.getImage().getWidth() - 1;
+        int iMaxY = (int) mImageView.getImage().getHeight() - 1;
 
+        // create boolean list and pair list -> boolean tracks if we have visited this pixel yet, linked list is Queue
+        boolean[][] pixelChecked = new boolean[iMaxX + 1][iMaxY + 1]; // default value is false
+        LinkedList<Pair<Integer,Integer>> pixelQueue = new LinkedList<>();
 
-        // TODO
+        // create a writable image and pixelwriter
+        WritableImage image = new WritableImage(mImageView.getImage().getPixelReader(), (int) mImageView.getImage().getWidth(), (int) mImageView.getImage().getHeight());
+        PixelWriter pixelWriter = image.getPixelWriter();
 
+        // update & add the first pixel to queue
+        Pair<Integer, Integer> thisPixel = new Pair<>(iPixelX, iPixelY);
+        pixelChecked[iPixelX][iPixelY] = true;
+        pixelQueue.addLast(thisPixel);
+
+        // loop while queue is not empty, i.e. so long as there is valid path forward
+        while (!pixelQueue.isEmpty()) {
+            // get first element, remove it from list
+            Pair<Integer, Integer> currentPixel = pixelQueue.getFirst();
+            pixelQueue.removeFirst();
+            int x = currentPixel.getKey();
+            int y = currentPixel.getValue();
+
+            // check if matching color: yes, then continue
+            if (isMatchingColorPixel(x, y, targetColor)) {
+                pixelWriter.setColor(x, y, mColor);
+
+                // enqueue 4 toughing elements if they qualify: within bounds and have not yet been checked
+                if (isPixelInBounds(x + 1, y) && !pixelChecked[x + 1][y]) {
+                    Pair<Integer, Integer> nextPixel = new Pair<>(x + 1, y);
+                    pixelChecked[x + 1][y] = true;
+                    pixelQueue.addLast(nextPixel);
+                }
+                if (isPixelInBounds(x - 1, y) && !pixelChecked[x - 1][y]) {
+                    Pair<Integer, Integer> nextPixel = new Pair<>(x - 1, y);
+                    pixelChecked[x - 1][y] = true;
+                    pixelQueue.addLast(nextPixel);
+                }
+                if (isPixelInBounds(x, y + 1) && !pixelChecked[x][y + 1]) {
+                    Pair<Integer, Integer> nextPixel = new Pair<>(x, y + 1);
+                    pixelChecked[x][y + 1] = true;
+                    pixelQueue.addLast(nextPixel);
+                }
+                if (isPixelInBounds(x, y - 1) && !pixelChecked[x][y - 1]) {
+                    Pair<Integer, Integer> nextPixel = new Pair<>(x, y - 1);
+                    pixelChecked[x][y - 1] = true;
+                    pixelQueue.addLast(nextPixel);
+                }
+            }
         }
+        // update the image
+        CommandCenter.getInstance().storeLastImageAsUndo();
+        CommandCenter.getInstance().setImageAndView(image);
     }
 
     // start a new rectangle selection

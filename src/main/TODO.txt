@@ -1,10 +1,8 @@
 TODO
-
-
-paint bucket
-apply effects to selection
-effects & undo: sliders or change to buttons
-WHY IS IMAGE MOVING UP AND RIGHT???
-
-mono - two tone or pick?
-toggle on already selected does not change
+1. paint bucket - DONE
+2. apply effects to selection
+3. effects & undo: sliders or change to buttons
+4. WHY IS IMAGE MOVING UP AND RIGHT???
+5. image pattern
+5. mono - two tone or pick?
+6. toggle on already selected does not change
