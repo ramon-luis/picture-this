@@ -55,9 +55,9 @@
          <children>
             <ToolBar fx:id="tbMain" prefHeight="26.0" prefWidth="1253.0">
               <items>
-                  <ToggleButton fx:id="tgbDraw" layoutX="10.0" layoutY="10.0" mnemonicParsing="false" text="Draw" />
-                  <ToggleButton fx:id="tgbEffects" layoutX="116.0" layoutY="10.0" mnemonicParsing="false" text="Effects" />
-                  <ToggleButton fx:id="tgbFilters" layoutX="222.0" layoutY="10.0" mnemonicParsing="false" text="Filters" />
+                  <ToggleButton fx:id="tgbDraw" layoutX="10.0" layoutY="10.0" mnemonicParsing="false" selected="false" text="Draw" />
+                  <ToggleButton fx:id="tgbEffects" layoutX="116.0" layoutY="10.0" mnemonicParsing="false" selected="false" text="Effects" />
+                  <ToggleButton fx:id="tgbFilters" layoutX="222.0" layoutY="10.0" mnemonicParsing="false" selected="false" text="Filters" />
                   <Separator prefHeight="27.0" prefWidth="21.0" />
                   <Button fx:id="btnUndo" disable="true" mnemonicParsing="false" text="Undo" />
                   <Button fx:id="btnRedo" disable="true" layoutX="164.0" layoutY="10.0" mnemonicParsing="false" text="Redo" />
@@ -92,7 +92,7 @@
                                        </font>
                                     </Text>
                                     <Button fx:id="btnResetPenSize" layoutX="11.0" layoutY="46.0" mnemonicParsing="false" prefHeight="26.0" prefWidth="59.0" text="Reset" />
-                                    <Slider fx:id="sldPenSize" layoutX="-29.0" layoutY="24.0" min="-100.0" />
+                                    <Slider fx:id="sldPenSize" layoutX="-29.0" layoutY="24.0" min="1.0" value="20.0" />
                                  </children>
                               </Group>
                               <Group fx:id="grpPenPressure" layoutX="803.0" layoutY="-6.0">
@@ -104,7 +104,7 @@
                                        </font>
                                     </Text>
                                     <Button fx:id="btnResetPenPressure" layoutX="11.0" layoutY="46.0" mnemonicParsing="false" prefHeight="26.0" prefWidth="59.0" text="Reset" />
-                                    <Slider fx:id="sldPenPressure" layoutX="-29.0" layoutY="24.0" min="-100.0" />
+                                    <Slider fx:id="sldPenPressure" layoutX="-29.0" layoutY="24.0" value="75.0" />
                                  </children>
                               </Group>
                            </children>
@@ -201,9 +201,9 @@
       </VBox>
         <ScrollPane prefHeight="484.0" prefWidth="1254.0">
             <content>
-                <AnchorPane fx:id="mAnchorPane" minHeight="0.0" minWidth="0.0" prefHeight="451.0" prefWidth="1240.0">
+                <AnchorPane fx:id="mAnchorPane" minHeight="0.0" minWidth="0.0" prefHeight="463.0" prefWidth="1256.0">
                     <children>
-                        <ImageView fx:id="mImageView" fitHeight="453.0" fitWidth="1254.0" layoutX="1.0" layoutY="-2.0" pickOnBounds="true" preserveRatio="true" />
+                        <ImageView fx:id="mImageView" fitHeight="479.0" fitWidth="1260.0" layoutX="1.0" layoutY="-2.0" pickOnBounds="true" preserveRatio="true" />
                     </children>
                 </AnchorPane>
             </content>

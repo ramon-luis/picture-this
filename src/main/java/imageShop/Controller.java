@@ -1,16 +1,20 @@
 package imageShop;
 
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
+import javafx.collections.FXCollections;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
-import javafx.scene.Group;
+import javafx.scene.*;
 import javafx.scene.effect.ColorAdjust;
+import javafx.scene.image.WritableImage;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Pane;
 import javafx.scene.shape.*;
 import javafx.geometry.Rectangle2D;
-import javafx.scene.SnapshotParameters;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -34,16 +38,24 @@ public class Controller implements Initializable{
     private enum DrawTool {BUCKET, PEN}
     private enum ActionSet {DRAW, EFFECTS, FILTERS}
 
+
+    private static final String DROPPER_IMAGE = "/images/dropper.png";
     private static final double DOUBLE_THRESHOLD = 0.1;
+    private static final double DEFAULT_PEN_SIZE = 20.0;
+    private static final double DEFAULT_PEN_PRESSURE = 75.0;
+    private static final double DEFAULT_EFFECTS_VALUE = 0.0;
+
 
     private ActionSet mActionSet;
     private Color mColor = Color.rgb(25, 150, 255);
     private DrawTool mDrawTool;
     private PenShape mPenShape;
     private int mPenSize;
+    private double mPenPressure;
     private Rectangle mRectangle;
     private double xPos, yPos, hPos, wPos;
     private boolean mUserIsCurrentlySelecting = false;
+    private boolean mUserIsPickingColor = false;
 
     private ColorAdjust mColorAdjust = new ColorAdjust();
     private ArrayList<Shape> removeShapes = new ArrayList<>(1000);
@@ -194,23 +206,11 @@ public class Controller implements Initializable{
     }
 
     @FXML void menuUndoAction(ActionEvent event) {
-        if (CommandCenter.getInstance().hasUndoImage()) {
-            Image currentImage = getSnapshot();
-            CommandCenter.getInstance().addRedoImage(currentImage);
-            Image undoImage = CommandCenter.getInstance().getUndoImage();
-            resetTouchUpSliders();
-            CommandCenter.getInstance().setImageAndView(undoImage);
-        }
+       undo();
     }
 
     @FXML void menuRedoAction(ActionEvent event) {
-        if (CommandCenter.getInstance().hasRedoImages()) {
-            Image currentImage = getSnapshot();
-            CommandCenter.getInstance().addUndoImage(currentImage);
-            Image redoImage = CommandCenter.getInstance().getRedoImage();
-            resetTouchUpSliders();
-            CommandCenter.getInstance().setImageAndView(redoImage);
-        }
+        redo();
     }
 
 
@@ -218,10 +218,15 @@ public class Controller implements Initializable{
     @Override
     public void initialize(URL location, ResourceBundle resourceBundle) {
 
+        // **************************************** //
+        // **                SETUP               ** //
+        // **************************************** //
+
         // set a back image
-        this.mImageView.setImage(getSnapshot());
-        CommandCenter.getInstance().addUndoImage(getSnapshot());
-        CommandCenter.getInstance().setImageView(this.mImageView);
+        Image initialImage = getSnapshot();
+        mImageView.setImage(initialImage);
+        CommandCenter.getInstance().setImageView(mImageView);
+        CommandCenter.getInstance().setImageAndView(initialImage);
 
         // assign toggle groups
         tgbDraw.setToggleGroup(tgActionSet);
@@ -235,17 +240,17 @@ public class Controller implements Initializable{
         // assign default color
         cpkColor.setValue(mColor);
 
-        // hide open recent - nothing available yet!
+        // hide open recent, hide tools, disable undo/edo
         hideRecentFileMenu();
-
-        // hide the tools pain
         hideToolPanel();
+        disableRedo();
+        disableUndo();
 
-        // no action set yet
+        // **************************************** //
+        // **            TOGGLE GROUPS           ** //
+        // **************************************** //
 
-
-
-        // update ActionSet toggle group
+        // ActionSet toggle group
         tgActionSet.selectedToggleProperty().addListener((observable, oldValue, newValue) -> {
             if (newValue == tgbDraw) {
                 mActionSet = ActionSet.DRAW;
@@ -253,6 +258,7 @@ public class Controller implements Initializable{
                     tgbDraw.setSelected(true);
                 } else {
                     tgbPen.setSelected(true);
+                    grpPenDetails.setVisible(true);
                 }
                 showDrawGroup();
             } else if (newValue == tgbEffects) {
@@ -264,7 +270,7 @@ public class Controller implements Initializable{
             }
         });
 
-        // update DrawTool toggle group
+        // DrawTool toggle group
         tgDrawTool.selectedToggleProperty().addListener((observable, oldValue, newValue) -> {
             if (newValue == tgbBucket) {
                 mDrawTool = DrawTool.BUCKET;
@@ -280,7 +286,7 @@ public class Controller implements Initializable{
             }
         });
 
-        // update PenShape toggle group
+        // PenShape toggle group
         tgPenShape.selectedToggleProperty().addListener((observable, oldValue, newValue) -> {
             if (newValue == tgbCircle) {
                 mPenShape = PenShape.CIRCLE;
@@ -289,12 +295,18 @@ public class Controller implements Initializable{
             }
         });
 
-        // update color based on color picker
+
+
+        // **************************************** //
+        // **            COLOR ACTIONS           ** //
+        // **************************************** //
+
+        // update color based on color picker menu dropdown
         cpkColor.setOnAction(event -> mColor = cpkColor.getValue());
 
-        // update size of pen based on slider
-        sldPenSize.valueProperty().addListener((observable, oldValue, newValue) -> {
-            mPenSize = (int) newValue;
+        // pick color using dropper
+        tgbPickColor.selectedProperty().addListener((observable, oldValue, newValue) -> {
+            mUserIsPickingColor = newValue;
         });
 
 
@@ -302,58 +314,55 @@ public class Controller implements Initializable{
         // **            MOUSE ACTIONS           ** //
         // **************************************** //
 
-        // action when mouse pressed: get x,y of mouse if pressed when using a filter
+        // mouse enters area
+        mImageView.addEventFilter(MouseEvent.MOUSE_ENTERED, mouseEvent -> {
+            if (mActionSet == ActionSet.DRAW && mUserIsPickingColor) {
+                setMouseToDropper(mouseEvent);
+            } else if (mActionSet == ActionSet.DRAW && mPenShape != null) {
+                setMouseToPenShape(mouseEvent);
+            }
+            mouseEvent.consume();
+        });
+
+        // mouse pressed
         mImageView.addEventFilter(MouseEvent.MOUSE_PRESSED, mouseEvent -> {
-            if (mActionSet == ActionSet.EFFECTS && tgbSelectArea.isSelected()) {
+            if (mActionSet == ActionSet.DRAW && mUserIsPickingColor) {
+                pickColorFromDropper(mouseEvent);
+            } else if (mActionSet == ActionSet.DRAW && (mPenShape  != null)) {
+                drawPen(mouseEvent);
+            } else if (mActionSet == ActionSet.EFFECTS && tgbSelectArea.isSelected()) {
                 if (mUserIsCurrentlySelecting) {
-                    mAnchorPane.getChildren().remove(mRectangle);
-                    mUserIsCurrentlySelecting = false;
+                    removeSelection();
                 } else {
-                    xPos = mouseEvent.getX();
-                    yPos = mouseEvent.getY();
-                    mRectangle = new Rectangle();
-                    mRectangle.setFill(Color.SNOW);
-                    mRectangle.setStroke(Color.WHITE);
-                    mRectangle.setOpacity(0.15);
-                    mAnchorPane.getChildren().add(mRectangle);
-                    mUserIsCurrentlySelecting = true;
+                    startSelection(mouseEvent);
                 }
             }
-
             mouseEvent.consume();
         });
 
-        // draw if mouse is dragged while pen is selected
+        // mouse dragged
         mImageView.addEventFilter(MouseEvent.MOUSE_DRAGGED, mouseEvent -> {
-            if (mActionSet == ActionSet.DRAW && (mPenShape == PenShape.CIRCLE || mPenShape == PenShape.SQUARE)) {
-                xPos = mouseEvent.getX();
-                yPos = mouseEvent.getY();
-                Shape penShape = Controller.this.getPenShapeShape();
-                mAnchorPane.getChildren().add(penShape);
-                removeShapes.add(penShape);
+            if (mActionSet == ActionSet.DRAW && (mPenShape  != null)) {
+               drawPen(mouseEvent);
             } else if (mActionSet == ActionSet.EFFECTS && mUserIsCurrentlySelecting) {
-                hPos = mouseEvent.getX();
-                wPos = mouseEvent.getY();
-                Controller.this.updateRectangle(xPos, yPos, hPos, wPos);
+                updateRectangle(mouseEvent);
             }
             mouseEvent.consume();
         });
 
-        // action when mouse released:
+        // mouse released:
         mImageView.addEventFilter(MouseEvent.MOUSE_RELEASED, mouseEvent -> {
-            if (mActionSet == ActionSet.DRAW && (mPenShape == PenShape.CIRCLE || mPenShape == PenShape.SQUARE)) {
+            if (mActionSet == ActionSet.DRAW && mPenShape != null) {
                 CommandCenter.getInstance().storeLastImageAsUndo();
+                enableUndo();
+
                 Image currentImage = getSnapshot();
-                resetTouchUpSliders();
+                resetEffectsSliders();
                 CommandCenter.getInstance().setImageAndView(currentImage);
                 mAnchorPane.getChildren().removeAll(removeShapes);
                 removeShapes.clear();
             } else if (mActionSet == ActionSet.EFFECTS && mUserIsCurrentlySelecting) {
-
-                wPos = mouseEvent.getX();
-                hPos = mouseEvent.getY();
-
-                updateRectangle(xPos, yPos, wPos, hPos);
+                updateRectangle(mouseEvent);
 
 //                    Image currentImage = CommandCenter.getInstance().getImage();
 //                    Image transformImage = currentImage;
@@ -371,13 +380,32 @@ public class Controller implements Initializable{
 //                    CommandCenter.getInstance().setImageDataAndRefreshView__OLD(transformImage);
 
             }
-
             mouseEvent.consume();
         });
 
+        // **************************************** //
+        // **    CHANGE VALUE FOR PEN SLIDERS    ** //
+        // **************************************** //
+
+        // pen pressure slider
+        sldPenPressure.valueProperty().addListener((observable, oldValue, newValue) -> {
+            mPenPressure = (double) newValue / 100;
+        });
+
+        // pen size slider
+        sldPenSize.valueProperty().addListener((observable, oldValue, newValue) -> {
+            mPenSize = (int) Math.round( (double) newValue);
+        });
 
         // **************************************** //
-        // ** CHANGE VALUE FOR TOUCH UP SLIDERS  ** //
+        // **   RESET BUTTONS FOR PEN SLIDERS    ** //
+        // **************************************** //
+
+        btnResetPenSize.setOnAction(event -> sldPenSize.setValue(DEFAULT_PEN_SIZE));
+        btnResetPenPressure.setOnAction(event -> sldPenPressure.setValue(DEFAULT_PEN_PRESSURE));
+
+        // **************************************** //
+        // **  CHANGE VALUE FOR EFFECTS SLIDERS  ** //
         // **************************************** //
 
         // brightness slider
@@ -400,15 +428,24 @@ public class Controller implements Initializable{
             Controller.this.updateColorAdjustEffect();
         });
 
+        // **************************************** //
+        // **  RESET BUTTONS FOR EFFECTS SLIDERS ** //
+        // **************************************** //
+
+        btnResetBrightness.setOnAction(event -> sldBrightness.setValue(DEFAULT_EFFECTS_VALUE));
+        btnResetContrast.setOnAction(event -> sldContrast.setValue(DEFAULT_EFFECTS_VALUE));
+        btnResetHue.setOnAction(event -> sldHue.setValue(DEFAULT_EFFECTS_VALUE));
+        btnResetSaturate.setOnAction(event -> sldSaturate.setValue(DEFAULT_EFFECTS_VALUE));
+        btnResetEffects.setOnAction(event -> resetEffectsSliders());
 
         // **************************************** //
-        // ** RESET BUTTONS FOR TOUCH UP SLIDERS ** //
+        // **        UNDO AND REDO BUTTONS       ** //
         // **************************************** //
 
-        btnResetBrightness.setOnAction(event -> sldBrightness.setValue(0.0));
-        btnResetContrast.setOnAction(event -> sldContrast.setValue(0.0));
-        btnResetHue.setOnAction(event -> sldHue.setValue(0.0));
-        btnResetSaturate.setOnAction(event -> sldSaturate.setValue(0.0));
+        btnUndo.setOnAction(event -> undo());
+        btnRedo.setOnAction(event -> redo());
+
+
     }
 
 
@@ -432,10 +469,11 @@ public class Controller implements Initializable{
         mColorAdjust.setSaturation(sldSaturate.getValue() / 100.0);
         Image selectionImage = getSnapshotForSelection();
         ImageView selection = new ImageView();
+        selection.setImage(selectionImage);
         selection.setEffect(mColorAdjust);
     }
 
-    // http://stackoverflow.com/questions/18260213/how-to-test-if-a-double-is-zero
+    // check if double is zero -> used for sliders
     private boolean isZero(double value) {
         return value >= -DOUBLE_THRESHOLD && value <= DOUBLE_THRESHOLD;
 
@@ -448,44 +486,115 @@ public class Controller implements Initializable{
         return mAnchorPane.snapshot(snapshotParameters, null);
     }
 
+    // get snapshot from rectangle selection
     private Image getSnapshotForSelection() {
         SnapshotParameters snapshotParameters = new SnapshotParameters();
         snapshotParameters.setViewport(new Rectangle2D(mRectangle.getX(), mRectangle.getY(), mRectangle.getWidth(), mRectangle.getHeight()));
         return mAnchorPane.snapshot(snapshotParameters, null);
     }
 
-    // set touch up sliders to 0 (base)
-    private void resetTouchUpSliders() {
-        sldBrightness.setValue(0.0);
-        sldContrast.setValue(0.0);
-        sldHue.setValue(0.0);
-        sldSaturate.setValue(0.0);
+    // set effects sliders to 0 (base)
+    private void resetEffectsSliders() {
+        sldBrightness.setValue(DEFAULT_EFFECTS_VALUE);
+        sldContrast.setValue(DEFAULT_EFFECTS_VALUE);
+        sldHue.setValue(DEFAULT_EFFECTS_VALUE);
+        sldSaturate.setValue(DEFAULT_EFFECTS_VALUE);
+    }
+
+    // change mouse icon to dropper
+    private void setMouseToDropper(MouseEvent mouseEvent) {
+        Image dropperImage = new Image(DROPPER_IMAGE, 25, 25, false, false);
+        double dBottom = dropperImage.getHeight();
+        double dLeft = 0;
+        ((Node) mouseEvent.getSource()).setCursor(new ImageCursor(dropperImage, dLeft, dBottom));
+    }
+
+    // get the color from image using dropper
+    public void pickColorFromDropper(MouseEvent mouseEvent) {
+        xPos = mouseEvent.getX();
+        yPos = mouseEvent.getY();
+        Color pixelColor = mImageView.getImage().getPixelReader().getColor( (int) xPos, (int) yPos);
+        cpkColor.setValue(pixelColor);
+        mUserIsPickingColor = false;
+        tgbPickColor.setSelected(false);
+        ((Node) mouseEvent.getSource()).setCursor(Cursor.DEFAULT);
+    }
+
+    // set the mouse icon to the pen shape
+    private void setMouseToPenShape(MouseEvent mouseEvent) {
+        SnapshotParameters snapshotParameters = new SnapshotParameters();
+        snapshotParameters.setFill(Color.TRANSPARENT);
+        WritableImage snapshot = getPenShape().snapshot(snapshotParameters, null);
+        double middleW = (mPenShape == PenShape.CIRCLE) ? snapshot.getWidth() / 2 : 0;
+        double middleH = (mPenShape == PenShape.CIRCLE) ? snapshot.getHeight() / 2 : 0;
+        ((Node) mouseEvent.getSource()).setCursor(new ImageCursor(snapshot, middleW, middleH));
     }
 
     // get the shape of the pen
-    private Shape getPenShapeShape() {
+    private Shape getPenShape() {
+        // get the current pen size and pressure
         Shape penShape = null;
+        mPenSize = (int) sldPenSize.getValue();
+        mPenPressure = sldPenPressure.getValue() / 100.0;
+
+        // update the shape based on pen shape selected
         if (this.mPenShape == PenShape.CIRCLE) {
             penShape = new Circle(xPos, yPos, mPenSize);
-        } else if (this.mPenShape== PenShape.SQUARE) {
+        } else if (this.mPenShape == PenShape.SQUARE) {
             penShape = new Rectangle(xPos, yPos, mPenSize, mPenSize);
         }
+
+        // set the color and pressure before returning
         penShape.setFill(mColor);
+        penShape.setOpacity(mPenPressure);
         return penShape;
     }
 
+    // draw with pen tool
+    private void drawPen(MouseEvent mouseEvent) {
+        // update x and y position from mouse
+        xPos = mouseEvent.getX();
+        yPos = mouseEvent.getY();
+
+        // get shape; add to anchor pane and removeShape list
+        Shape penShape = getPenShape();
+        mAnchorPane.getChildren().add(penShape);
+        removeShapes.add(penShape);
+    }
+
+    // start a new rectangle selection
+    private void startSelection(MouseEvent mouseEvent) {
+        xPos = mouseEvent.getX();
+        yPos = mouseEvent.getY();
+        mRectangle = new Rectangle();
+        mRectangle.setFill(Color.SNOW);
+        mRectangle.setStroke(Color.WHITE);
+        mRectangle.setOpacity(0.15);
+        mAnchorPane.getChildren().add(mRectangle);
+        mUserIsCurrentlySelecting = true;
+    }
+
+    // remove rectangle selection
+    private void removeSelection() {
+        mAnchorPane.getChildren().remove(mRectangle);
+        mUserIsCurrentlySelecting = false;
+    }
+
     // update rectangle: used to invert shape based on mouse position
-    private void updateRectangle(double dStartX, double dStartY, double dEndX, double dEndY) {
+    private void updateRectangle(MouseEvent mouseEvent) {
+        // update end corner based on mouse
+        hPos = mouseEvent.getX();
+        wPos = mouseEvent.getY();
 
         // check if x and y are inverted
-        boolean bIsInvertedH = dEndX < dStartX;
-        boolean bIsInvertedV = dEndY < dStartY;
+        boolean bIsInvertedH = wPos < xPos;
+        boolean bIsInvertedV = hPos < yPos;
 
         // set the x, y, width, and height
-        double dX = !bIsInvertedH ? dStartX: dEndX;
-        double dY = !bIsInvertedV ? dStartY : dEndY;
-        double dWidth = !bIsInvertedH ? (dEndX - dStartX) : (dStartX - dEndX);
-        double dHeight = !bIsInvertedV ? (dEndY - dStartY) : (dStartY - dEndY);
+        double dX = !bIsInvertedH ? xPos: wPos;
+        double dY = !bIsInvertedV ? yPos : hPos;
+        double dWidth = !bIsInvertedH ? (wPos - xPos) : (xPos - wPos);
+        double dHeight = !bIsInvertedV ? (hPos - yPos) : (yPos - hPos);
 
         // update rectangle
         mRectangle.setX(dX);
@@ -494,6 +603,7 @@ public class Controller implements Initializable{
         mRectangle.setHeight(dHeight);
     }
 
+    // update the recent file menu
     private void updateRecentFileMenu(File file) {
         // add file to recent file list & update menu
         CommandCenter.getInstance().addRecentFile(file);
@@ -509,9 +619,11 @@ public class Controller implements Initializable{
             recentFileMenuItems[i].setVisible(true);
         }
 
+        // set recent file menu as visible
         menuOpenRecent.setVisible(true);
     }
 
+    // hde recent file menu & sub items
     private void hideRecentFileMenu() {
         menuRecentFile1.setVisible(false);
         menuRecentFile2.setVisible(false);
@@ -521,7 +633,7 @@ public class Controller implements Initializable{
         menuOpenRecent.setVisible(false);
     }
 
-
+    // try to read an image file
     public void openImageFile(File file) {
         try {
             // read the file & convert to FX Image object type
@@ -530,18 +642,25 @@ public class Controller implements Initializable{
 
             // update the application to display the image
             CommandCenter.getInstance().setImageAndView(newImage);
+
+            // no undo or redo -> new file
+            CommandCenter.getInstance().clearUndoImages();
+            CommandCenter.getInstance().clearRedoImages();
+            disableRedo();
+            disableUndo();
         } catch (Exception e) {
             System.out.println("there was an error loading the image file: ");
             System.out.println("  " + e);
         }
     }
 
+    // hide the tool panel
     private void hideToolPanel() {
         pnTools.setVisible(false);
-//        pnTools.setStyle("-fx-border-color: lightgrey;");
         pnTools.setManaged(false);
     }
 
+    // hide the draw tools
     private void hideDraw() {
         grpDraw.setVisible(false);
         grpColor.setVisible(false);
@@ -549,14 +668,17 @@ public class Controller implements Initializable{
         grpPenDetails.setVisible(false);
     }
 
+    // hide the effects
     private void hideEffects() {
         grpEffects.setVisible(false);
     }
 
+    // hide the filters
     private void hideFilters() {
         grpFilters.setVisible(false);
     }
 
+    // show the draw tools
     private void showDrawGroup() {
         pnTools.setManaged(true);
         pnTools.setVisible(true);
@@ -567,6 +689,7 @@ public class Controller implements Initializable{
         hideFilters();
     }
 
+    // show the effects
     private void showEffectsGroup() {
         pnTools.setManaged(true);
         pnTools.setVisible(true);
@@ -575,6 +698,7 @@ public class Controller implements Initializable{
         hideFilters();
     }
 
+    // show the filters
     private void showFilterGroup() {
         pnTools.setManaged(true);
         pnTools.setVisible(true);
@@ -582,4 +706,60 @@ public class Controller implements Initializable{
         hideEffects();
         hideDraw();
     }
+
+    // enable undo buttons
+    private void enableUndo() {
+        menuUndo.setDisable(false);
+        btnUndo.setDisable(false);
+    }
+
+    // disable undo buttons
+    private void disableUndo() {
+        menuUndo.setDisable(true);
+        btnUndo.setDisable(true);
+    }
+
+    // enable redo buttons
+    private void enableRedo() {
+        menuRedo.setDisable(false);
+        btnRedo.setDisable(false);
+    }
+
+    // disable redo buttons
+    private void disableRedo() {
+        menuRedo.setDisable(true);
+        btnRedo.setDisable(true);
+    }
+
+    // undo action
+    private void undo() {
+        if (CommandCenter.getInstance().hasUndoImage()) {
+            Image currentImage = getSnapshot();
+            CommandCenter.getInstance().addRedoImage(currentImage);
+            Image undoImage = CommandCenter.getInstance().getUndoImage();
+            resetEffectsSliders();
+            CommandCenter.getInstance().setImageAndView(undoImage);
+            enableRedo();
+            if (!CommandCenter.getInstance().hasUndoImage()) {
+                disableUndo();
+            }
+        }
+    }
+
+    // redo action
+    private void redo() {
+        if (CommandCenter.getInstance().hasRedoImage()) {
+            Image currentImage = getSnapshot();
+            CommandCenter.getInstance().addUndoImage(currentImage);
+            Image redoImage = CommandCenter.getInstance().getRedoImage();
+            resetEffectsSliders();
+            CommandCenter.getInstance().setImageAndView(redoImage);
+            enableUndo();
+            if (!CommandCenter.getInstance().hasRedoImage()) {
+                disableRedo();
+            }
+        }
+    }
+
+
 }

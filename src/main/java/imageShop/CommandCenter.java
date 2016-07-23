@@ -47,7 +47,7 @@ public class CommandCenter {
     }
 
     public void setImageView(ImageView imageView) {
-        this.mImageView = imageView;
+        mImageView = imageView;
     }
 
     public void closeImage() {
@@ -57,13 +57,13 @@ public class CommandCenter {
     }
 
     public void setImageAndView(Image image) {
-        this.mImage = image;
-        this.mImageView.setImage(image);
+            mImage = image;
+            mImageView.setImage(image);
     }
 
     public void storeLastImageAsUndo() {
-        if (this.mImage != null) {
-            sBackImages.push(this.mImage);
+        if (mImage != null) {
+            sBackImages.push(mImage);
         }
     }
 
@@ -82,6 +82,10 @@ public class CommandCenter {
         return !sBackImages.isEmpty();
     }
 
+    public void clearUndoImages() {
+        sBackImages.clear();
+    }
+
     public void addRedoImage(Image image) {
         sForwardImages.push(image);
     }
@@ -93,17 +97,16 @@ public class CommandCenter {
         return sForwardImages.pop();
     }
 
-    public boolean hasRedoImages() {
+    public boolean hasRedoImage() {
         return !sForwardImages.isEmpty();
     }
 
+    public void clearRedoImages() {
+        sForwardImages.clear();
+    }
 
     public void addRecentFile(File file) {
         sRecentFiles.push(file);
-    }
-
-    public File getRecentFile() {
-        return sRecentFiles.pop();
     }
 
     public List<File> getRecentFiles() {
