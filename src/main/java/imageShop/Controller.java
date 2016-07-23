@@ -1,15 +1,13 @@
 package imageShop;
 
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
-import javafx.collections.FXCollections;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.*;
 import javafx.scene.effect.ColorAdjust;
+import javafx.scene.effect.SepiaTone;
+import javafx.scene.image.PixelWriter;
 import javafx.scene.image.WritableImage;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Pane;
@@ -23,6 +21,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.stage.FileChooser;
 
+import javafx.scene.paint.Paint;
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -40,6 +39,7 @@ public class Controller implements Initializable{
 
 
     private static final String DROPPER_IMAGE = "/images/dropper.png";
+    private static final String BUCKET_IMAGE = "/images/bucket.png";
     private static final double DOUBLE_THRESHOLD = 0.1;
     private static final double DEFAULT_PEN_SIZE = 20.0;
     private static final double DEFAULT_PEN_PRESSURE = 75.0;
@@ -119,6 +119,7 @@ public class Controller implements Initializable{
     @FXML private Button btnGreyscale;
     @FXML private Button btnSepia;
     @FXML private Button btnInvert;
+    @FXML private Button btnMonochrome;
 
     @FXML private ToggleGroup tgActionSet = new ToggleGroup();
     @FXML private ToggleGroup tgDrawTool = new ToggleGroup();
@@ -318,7 +319,9 @@ public class Controller implements Initializable{
         mImageView.addEventFilter(MouseEvent.MOUSE_ENTERED, mouseEvent -> {
             if (mActionSet == ActionSet.DRAW && mUserIsPickingColor) {
                 setMouseToDropper(mouseEvent);
-            } else if (mActionSet == ActionSet.DRAW && mPenShape != null) {
+            } else if (mActionSet == ActionSet.DRAW && mDrawTool == DrawTool.BUCKET) {
+                setMouseToBucket(mouseEvent);
+            } else if (mActionSet == ActionSet.DRAW && mDrawTool == DrawTool.PEN && mPenShape != null) {
                 setMouseToPenShape(mouseEvent);
             }
             mouseEvent.consume();
@@ -328,7 +331,9 @@ public class Controller implements Initializable{
         mImageView.addEventFilter(MouseEvent.MOUSE_PRESSED, mouseEvent -> {
             if (mActionSet == ActionSet.DRAW && mUserIsPickingColor) {
                 pickColorFromDropper(mouseEvent);
-            } else if (mActionSet == ActionSet.DRAW && (mPenShape  != null)) {
+            } else if (mActionSet == ActionSet.DRAW && mDrawTool == DrawTool.BUCKET) {
+                fillFromBucket(mouseEvent);
+            } else if (mActionSet == ActionSet.DRAW && mDrawTool == DrawTool.PEN && mPenShape != null) {
                 drawPen(mouseEvent);
             } else if (mActionSet == ActionSet.EFFECTS && tgbSelectArea.isSelected()) {
                 if (mUserIsCurrentlySelecting) {
@@ -342,8 +347,10 @@ public class Controller implements Initializable{
 
         // mouse dragged
         mImageView.addEventFilter(MouseEvent.MOUSE_DRAGGED, mouseEvent -> {
-            if (mActionSet == ActionSet.DRAW && (mPenShape  != null)) {
+            if (mActionSet == ActionSet.DRAW &&  mDrawTool == DrawTool.PEN && mPenShape != null) {
                drawPen(mouseEvent);
+            } else if (mActionSet == ActionSet.DRAW && mDrawTool == DrawTool.BUCKET) {
+                fillFromBucket(mouseEvent);
             } else if (mActionSet == ActionSet.EFFECTS && mUserIsCurrentlySelecting) {
                 updateRectangle(mouseEvent);
             }
@@ -352,7 +359,7 @@ public class Controller implements Initializable{
 
         // mouse released:
         mImageView.addEventFilter(MouseEvent.MOUSE_RELEASED, mouseEvent -> {
-            if (mActionSet == ActionSet.DRAW && mPenShape != null) {
+            if (mActionSet == ActionSet.DRAW && mDrawTool == DrawTool.PEN && mPenShape != null) {
                 CommandCenter.getInstance().storeLastImageAsUndo();
                 enableUndo();
 
@@ -361,6 +368,16 @@ public class Controller implements Initializable{
                 CommandCenter.getInstance().setImageAndView(currentImage);
                 mAnchorPane.getChildren().removeAll(removeShapes);
                 removeShapes.clear();
+            } else if (mActionSet == ActionSet.DRAW && mDrawTool == DrawTool.BUCKET) {
+                CommandCenter.getInstance().storeLastImageAsUndo();
+                enableUndo();
+
+                Image currentImage = getSnapshot();
+                resetEffectsSliders();
+                CommandCenter.getInstance().setImageAndView(currentImage);
+                //mAnchorPane.getChildren().removeAll(removeShapes);
+                //removeShapes.clear();
+
             } else if (mActionSet == ActionSet.EFFECTS && mUserIsCurrentlySelecting) {
                 updateRectangle(mouseEvent);
 
@@ -445,9 +462,91 @@ public class Controller implements Initializable{
         btnUndo.setOnAction(event -> undo());
         btnRedo.setOnAction(event -> redo());
 
+        // **************************************** //
+        // **           FILTER BUTTONS          ** //
+        // **************************************** //
 
+        btnSepia.setOnAction(event -> applySepiaFilter());
+        btnInvert.setOnAction(event -> applyInvertFilter());
+        btnGreyscale.setOnAction(event -> applyGrayscaleFilter());
+        btnMonochrome.setOnAction(event -> applyMonoFilter());
     }
 
+
+    // grayscale filter
+    private void applyGrayscaleFilter() {
+        CommandCenter.getInstance().storeLastImageAsUndo();
+        enableUndo();
+        WritableImage grayscaleImage = new WritableImage((int) mImageView.getImage().getWidth(), (int) mImageView.getImage().getHeight());
+        PixelWriter pixelWriter = grayscaleImage.getPixelWriter();
+        for (int x = 0; x < mImageView.getImage().getWidth(); x++) {
+            for (int y = 0; y < mImageView.getImage().getHeight(); y++) {
+                Color currentColor = mImageView.getImage().getPixelReader().getColor(x, y);
+                pixelWriter.setColor(x, y, currentColor.grayscale());
+            }
+        }
+        resetEffectsSliders();
+        CommandCenter.getInstance().setImageAndView(grayscaleImage);
+        mAnchorPane.getChildren().removeAll(removeShapes);
+        removeShapes.clear();
+    }
+
+    // invert filter
+    private void applyInvertFilter() {
+        CommandCenter.getInstance().storeLastImageAsUndo();
+        enableUndo();
+        WritableImage inverseImage = new WritableImage((int) mImageView.getImage().getWidth(), (int) mImageView.getImage().getHeight());
+        PixelWriter pixelWriter = inverseImage.getPixelWriter();
+        for (int x = 0; x < mImageView.getImage().getWidth(); x++) {
+            for (int y = 0; y < mImageView.getImage().getHeight(); y++) {
+                Color currentColor = mImageView.getImage().getPixelReader().getColor(x, y);
+                pixelWriter.setColor(x, y, currentColor.invert());
+            }
+        }
+        resetEffectsSliders();
+        CommandCenter.getInstance().setImageAndView(inverseImage);
+        mAnchorPane.getChildren().removeAll(removeShapes);
+        removeShapes.clear();
+    }
+
+    // sepia filter
+    private void applySepiaFilter() {
+        CommandCenter.getInstance().storeLastImageAsUndo();
+        enableUndo();
+
+        SepiaTone sepiaTone = new SepiaTone();
+        sepiaTone.setLevel(0.70);
+        mImageView.setEffect(sepiaTone);
+        Image currentImage = getSnapshot();
+
+        resetEffectsSliders();
+
+        CommandCenter.getInstance().setImageAndView(currentImage);
+        mAnchorPane.getChildren().removeAll(removeShapes);
+        removeShapes.clear();
+    }
+
+    // sepia filter
+    private void applyMonoFilter() {
+        double monoThreshold = 1.0;
+        CommandCenter.getInstance().storeLastImageAsUndo();
+        enableUndo();
+        WritableImage monoImage = new WritableImage((int) mImageView.getImage().getWidth(), (int) mImageView.getImage().getHeight());
+        PixelWriter pixelWriter = monoImage.getPixelWriter();
+        for (int x = 0; x < mImageView.getImage().getWidth(); x++) {
+            for (int y = 0; y < mImageView.getImage().getHeight(); y++) {
+                Color currentColor = mImageView.getImage().getPixelReader().getColor(x, y);
+                Color newColor = (currentColor.getRed() + currentColor.getRed() + currentColor.getBlue() < monoThreshold) ?
+                        Color.BLACK : Color.WHITE;
+
+                    pixelWriter.setColor(x, y, newColor);
+            }
+        }
+        resetEffectsSliders();
+        CommandCenter.getInstance().setImageAndView(monoImage);
+        mAnchorPane.getChildren().removeAll(removeShapes);
+        removeShapes.clear();
+    }
 
     // **************************************** //
     // **           HELPER METHODS           ** //
@@ -482,7 +581,7 @@ public class Controller implements Initializable{
     // get a "snap" of screen's current image
     private Image getSnapshot() {
         SnapshotParameters snapshotParameters = new SnapshotParameters();
-        snapshotParameters.setViewport(new Rectangle2D(0, 0, mImageView.getFitWidth(), mImageView.getFitHeight()));
+        //snapshotParameters.setViewport(new Rectangle2D(0, 0, mImageView.getFitWidth(), mImageView.getFitHeight()));
         return mAnchorPane.snapshot(snapshotParameters, null);
     }
 
@@ -513,7 +612,7 @@ public class Controller implements Initializable{
     public void pickColorFromDropper(MouseEvent mouseEvent) {
         xPos = mouseEvent.getX();
         yPos = mouseEvent.getY();
-        Color pixelColor = mImageView.getImage().getPixelReader().getColor( (int) xPos, (int) yPos);
+        Color pixelColor = mImageView.getImage().getPixelReader().getColor((int) xPos, (int) yPos);
         cpkColor.setValue(pixelColor);
         mUserIsPickingColor = false;
         tgbPickColor.setSelected(false);
@@ -560,6 +659,44 @@ public class Controller implements Initializable{
         Shape penShape = getPenShape();
         mAnchorPane.getChildren().add(penShape);
         removeShapes.add(penShape);
+    }
+
+    // change mouse icon to bucket
+    private void setMouseToBucket(MouseEvent mouseEvent) {
+        Image dropperImage = new Image(BUCKET_IMAGE, 40, 40, false, false);
+        double dBottomish = dropperImage.getHeight() * 0.70;
+        double dRightish = dropperImage.getWidth() * 0.90;
+        ((Node) mouseEvent.getSource()).setCursor(new ImageCursor(dropperImage, dRightish, dBottomish));
+    }
+
+    // fill: paint
+    private void fillFromBucket(MouseEvent mouseEvent) {
+        xPos = mouseEvent.getX();
+        yPos = mouseEvent.getY();
+        Color targetColor = mImageView.getImage().getPixelReader().getColor((int) xPos, (int) yPos);
+        fillRecursive((int) xPos, (int) yPos, targetColor);
+    }
+
+    // check if pixel address is within image
+    private boolean isPixelInBounds(int iPixelX, int iPixelY) {
+        int iMaxX = (int) mImageView.getImage().getWidth() - 1;
+        int iMaxY = (int) mImageView.getImage().getHeight() - 1;
+        return (iPixelX >= 0 && iPixelX <= iMaxX) && (iPixelY >= 0 && iPixelY <= iMaxY);
+    }
+
+    // check if pixel has matching color
+    private boolean isMatchingColorPixel(int iPixelX, int iPixelY, Color targetColor) {
+        return mImageView.getImage().getPixelReader().getColor(iPixelX, iPixelY).equals(targetColor);
+    }
+
+    // recursive call to fill across all pixels that touch and are same color
+    private void fillRecursive(int iPixelX, int iPixelY, Color targetColor) {
+        if (isPixelInBounds(iPixelX, iPixelY) && isMatchingColorPixel(iPixelX, iPixelY, targetColor)) {
+
+
+        // TODO
+
+        }
     }
 
     // start a new rectangle selection

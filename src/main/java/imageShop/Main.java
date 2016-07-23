@@ -21,7 +21,7 @@ public class Main extends Application {
         String fxmlFile = "/fxml/imageShop.fxml";
         FXMLLoader loader = new FXMLLoader();
         Parent rootNode = loader.load(getClass().getResourceAsStream(fxmlFile));
-        Scene scene = new Scene(rootNode, 1200, 600);
+        Scene scene = new Scene(rootNode, 1300, 800);
         scene.getStylesheets().add("/styles/styles.css");
         stage.setTitle("Picture This");
         stage.setScene(scene);

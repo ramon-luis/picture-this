@@ -1,8 +1,9 @@
 TODO
 WHY IS IMAGE MOVING UP AND RIGHT???
+TURN OFF MOUSE EFFECT WHEN OPENING FILES
+CUSTOM COLOR NEEDS TO UPDATE
 
-
-look at Horstman for ideas
+mono - two tone?
 
 radio for action:
 paint with pen: circle or square

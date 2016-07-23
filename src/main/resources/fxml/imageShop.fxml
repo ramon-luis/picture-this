@@ -9,7 +9,7 @@
 <?import javafx.scene.paint.*?>
 <?import javafx.scene.text.*?>
 
-<VBox prefHeight="604.0" prefWidth="1254.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="imageShop.Controller">
+<VBox prefHeight="900.0" prefWidth="1350.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="imageShop.Controller">
     <children>
         <MenuBar VBox.vgrow="NEVER">
             <menus>
@@ -51,9 +51,9 @@
                 </Menu>
             </menus>
         </MenuBar>
-      <VBox>
+      <VBox prefHeight="305.0" prefWidth="1350.0">
          <children>
-            <ToolBar fx:id="tbMain" prefHeight="26.0" prefWidth="1253.0">
+            <ToolBar fx:id="tbMain" prefHeight="26.0" prefWidth="1400.0">
               <items>
                   <ToggleButton fx:id="tgbDraw" layoutX="10.0" layoutY="10.0" mnemonicParsing="false" selected="false" text="Draw" />
                   <ToggleButton fx:id="tgbEffects" layoutX="116.0" layoutY="10.0" mnemonicParsing="false" selected="false" text="Effects" />
@@ -65,13 +65,13 @@
                   <Button fx:id="btnStartOver" disable="true" layoutX="394.0" layoutY="10.0" mnemonicParsing="false" text="Start Over" />
               </items>
             </ToolBar>
-            <Pane fx:id="pnTools" prefHeight="102.0" prefWidth="1254.0">
+            <Pane fx:id="pnTools" prefHeight="90.0" prefWidth="1350.0">
                <children>
-                  <Group fx:id="grpDraw">
+                  <Group fx:id="grpDraw" layoutY="3.0" visible="false">
                      <children>
-                        <Group fx:id="grpPenDetails" layoutX="-71.0" layoutY="2.0" visible="false">
+                        <Group fx:id="grpPenDetails" layoutX="-1.0" layoutY="5.0">
                            <children>
-                              <Group fx:id="grpPenShape" layoutX="16.0">
+                              <Group fx:id="grpPenShape" layoutX="-123.0">
                                  <children>
                                     <Separator fx:id="spColor2" layoutX="458.0" layoutY="11.0" orientation="VERTICAL" prefHeight="49.0" prefWidth="7.0" />
                                     <Text fill="WHITE" layoutX="497.0" layoutY="12.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Pen Shape" textAlignment="CENTER" wrappingWidth="75.0">
@@ -83,7 +83,7 @@
                                         <ToggleButton fx:id="tgbSquare" layoutX="534.0" layoutY="22.0" mnemonicParsing="false" text="Square" />
                                  </children>
                               </Group>
-                              <Group fx:id="grpPenSize" layoutX="660.0" layoutY="-6.0">
+                              <Group fx:id="grpPenSize" layoutX="523.0" layoutY="-6.0">
                                  <children>
                                     <Separator fx:id="spColor3" layoutX="-40.0" layoutY="16.0" orientation="VERTICAL" prefHeight="49.0" prefWidth="7.0" />
                                     <Text fill="WHITE" layoutX="3.0" layoutY="18.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Pen Size" textAlignment="CENTER" wrappingWidth="75.0">
@@ -95,9 +95,9 @@
                                     <Slider fx:id="sldPenSize" layoutX="-29.0" layoutY="24.0" min="1.0" value="20.0" />
                                  </children>
                               </Group>
-                              <Group fx:id="grpPenPressure" layoutX="803.0" layoutY="-6.0">
+                              <Group fx:id="grpPenPressure" layoutX="679.0" layoutY="-6.0">
                                  <children>
-                                    <Separator fx:id="spColor4" layoutX="-33.0" layoutY="16.0" orientation="VERTICAL" prefHeight="49.0" prefWidth="7.0" />
+                                    <Separator fx:id="spColor4" layoutX="-38.0" layoutY="16.0" orientation="VERTICAL" prefHeight="49.0" prefWidth="7.0" />
                                     <Text fill="WHITE" layoutX="-3.0" layoutY="18.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Pen Pressure" textAlignment="CENTER" wrappingWidth="87.0">
                                        <font>
                                           <Font name="System Bold" size="13.0" />
@@ -109,18 +109,13 @@
                               </Group>
                            </children>
                         </Group>
-                        <Group fx:id="grpColor" layoutX="-31.0" visible="false">
+                        <Group fx:id="grpColor" layoutX="-31.0">
                            <children>
-                              <ToggleButton fx:id="tgbPickColor" layoutX="190.0" layoutY="24.0" mnemonicParsing="false" prefHeight="27.0" prefWidth="89.0" text="Pick Color" />
-                              <Text fill="WHITE" layoutX="88.0" layoutY="14.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Color" textAlignment="CENTER" wrappingWidth="88.0">
-                                 <font>
-                                    <Font name="System Bold" size="13.0" />
-                                 </font>
-                              </Text>
-                                  <ColorPicker fx:id="cpkColor" layoutX="37.0" layoutY="24.0" />
+                                  <ColorPicker fx:id="cpkColor" layoutX="37.0" layoutY="4.0" />
+                              <ToggleButton fx:id="tgbPickColor" layoutX="37.0" layoutY="37.0" mnemonicParsing="false" prefHeight="27.0" prefWidth="89.0" text="Pick Color" />
                            </children>
                         </Group>
-                        <Group fx:id="grpDrawTool" layoutX="-200.0" layoutY="2.0" visible="false">
+                        <Group fx:id="grpDrawTool" layoutX="-272.0" layoutY="5.0">
                            <children>
                               <Separator fx:id="spColor1" layoutX="455.0" layoutY="10.0" orientation="VERTICAL" prefHeight="49.0" prefWidth="7.0" />
                               <Text fill="WHITE" layoutX="488.0" layoutY="12.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Drawing Tool" textAlignment="CENTER" wrappingWidth="88.0">
@@ -188,22 +183,23 @@
                         </Group>
                      </children>
                   </Group>
-                  <Group fx:id="grpFilters" visible="false">
+                  <Group fx:id="grpFilters">
                      <children>
                       <Button fx:id="btnGreyscale" layoutX="14.0" layoutY="9.0" mnemonicParsing="false" prefHeight="49.0" prefWidth="105.0" text="Grayscale" />
                         <Button fx:id="btnSepia" layoutX="127.0" layoutY="9.0" mnemonicParsing="false" prefHeight="49.0" prefWidth="105.0" text="Sepia" />
                         <Button fx:id="btnInvert" layoutX="240.0" layoutY="9.0" mnemonicParsing="false" prefHeight="49.0" prefWidth="105.0" text="Invert" />
+                        <Button fx:id="btnMonochrome" layoutX="351.0" layoutY="9.0" mnemonicParsing="false" prefHeight="49.0" prefWidth="105.0" text="Monochrome" />
                      </children>
                   </Group>
                </children>
             </Pane>
          </children>
       </VBox>
-        <ScrollPane prefHeight="484.0" prefWidth="1254.0">
+        <ScrollPane prefHeight="768.0" prefWidth="1349.0">
             <content>
-                <AnchorPane fx:id="mAnchorPane" minHeight="0.0" minWidth="0.0" prefHeight="463.0" prefWidth="1256.0">
+                <AnchorPane fx:id="mAnchorPane" minHeight="0.0" minWidth="0.0" prefHeight="765.0" prefWidth="1349.0">
                     <children>
-                        <ImageView fx:id="mImageView" fitHeight="479.0" fitWidth="1260.0" layoutX="1.0" layoutY="-2.0" pickOnBounds="true" preserveRatio="true" />
+                        <ImageView fx:id="mImageView" fitHeight="770.0" fitWidth="1350.0" layoutX="-4.0" layoutY="-5.0" pickOnBounds="true" preserveRatio="true" />
                     </children>
                 </AnchorPane>
             </content>
