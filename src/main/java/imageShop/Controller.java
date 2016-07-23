@@ -62,6 +62,7 @@ public class Controller implements Initializable{
     private double xPos, yPos, hPos, wPos;
     private boolean mUserIsCurrentlySelecting = false;
     private boolean mUserIsPickingColor = false;
+    private boolean mIsOpenDialogBox = false;
     private ColorAdjust mColorAdjust = new ColorAdjust();
     private ArrayList<Shape> removeShapes = new ArrayList<>(1000);
     private File mCurrentFile;
@@ -238,10 +239,13 @@ public class Controller implements Initializable{
 
         // ActionSet toggle group
         tgActionSet.selectedToggleProperty().addListener((observable, oldValue, newValue) -> {
-            if (newValue == tgbDraw) {
+            if (newValue == oldValue) {
+                tgActionSet.getSelectedToggle().setSelected(true);
+            } else if (newValue == tgbDraw) {
                 mActionSet = ActionSet.DRAW;
+                tgbDraw.setSelected(true);
                 if (mDrawTool == DrawTool.BUCKET) {
-                    tgbDraw.setSelected(true);
+                    tgbBucket.setSelected(true);
                 } else {
                     tgbPen.setSelected(true);
                     grpPenDetails.setVisible(true);
@@ -249,9 +253,11 @@ public class Controller implements Initializable{
                 showDrawGroup();
             } else if (newValue == tgbEffects) {
                 mActionSet = ActionSet.EFFECTS;
+                tgbEffects.setSelected(true);
                 showEffectsGroup();
             } else if (newValue == tgbFilters) {
                 mActionSet = ActionSet.FILTERS;
+                tgbFilters.setSelected(true);
                 showFilterGroup();
             }
         });
@@ -260,9 +266,11 @@ public class Controller implements Initializable{
         tgDrawTool.selectedToggleProperty().addListener((observable, oldValue, newValue) -> {
             if (newValue == tgbBucket) {
                 mDrawTool = DrawTool.BUCKET;
+                tgbBucket.setSelected(true);
                 grpPenDetails.setVisible(false);
             } else if (newValue == tgbPen) {
                 mDrawTool = DrawTool.PEN;
+                tgbPen.setSelected(true);
                 grpPenDetails.setVisible(true);
                 if (mPenShape == PenShape.SQUARE) {
                     tgbSquare.setSelected(true);
@@ -276,8 +284,10 @@ public class Controller implements Initializable{
         tgPenShape.selectedToggleProperty().addListener((observable, oldValue, newValue) -> {
             if (newValue == tgbCircle) {
                 mPenShape = PenShape.CIRCLE;
+                tgbCircle.setSelected(true);
             } else if (newValue == tgbSquare) {
                 mPenShape = PenShape.SQUARE;
+                tgbSquare.setSelected(true);
             }
         });
 
@@ -302,12 +312,16 @@ public class Controller implements Initializable{
 
         // mouse enters area
         mImageView.addEventFilter(MouseEvent.MOUSE_ENTERED, mouseEvent -> {
-            if (mActionSet == ActionSet.DRAW && mUserIsPickingColor) {
-                setMouseToDropper(mouseEvent);
-            } else if (mActionSet == ActionSet.DRAW && mDrawTool == DrawTool.BUCKET) {
-                setMouseToBucket(mouseEvent);
-            } else if (mActionSet == ActionSet.DRAW && mDrawTool == DrawTool.PEN && mPenShape != null) {
-                setMouseToPenShape(mouseEvent);
+            if (!mIsOpenDialogBox) {
+                if (mActionSet == ActionSet.DRAW && mUserIsPickingColor) {
+                    setMouseToDropper(mouseEvent);
+                } else if (mActionSet == ActionSet.DRAW && mDrawTool == DrawTool.BUCKET) {
+                    setMouseToBucket(mouseEvent);
+                } else if (mActionSet == ActionSet.DRAW && mDrawTool == DrawTool.PEN && mPenShape != null) {
+                    setMouseToPenShape(mouseEvent);
+                }
+            }else {
+                ((Node) mouseEvent.getSource()).setCursor(Cursor.DEFAULT);
             }
             mouseEvent.consume();
         });
@@ -600,6 +614,7 @@ public class Controller implements Initializable{
         yPos = mouseEvent.getY();
         Color pixelColor = mImageView.getImage().getPixelReader().getColor((int) xPos, (int) yPos);
         cpkColor.setValue(pixelColor);
+        mColor = pixelColor;
         mUserIsPickingColor = false;
         tgbPickColor.setSelected(false);
         ((Node) mouseEvent.getSource()).setCursor(Cursor.DEFAULT);
@@ -912,6 +927,8 @@ public class Controller implements Initializable{
 
     // open an image file
     private void openFile() {
+        mIsOpenDialogBox = true;
+
         // create a new file chooser
         FileChooser fileChooser = new FileChooser();
 
@@ -922,11 +939,13 @@ public class Controller implements Initializable{
 
         // open the file choose dialog box and try to update with the selected image
         File file = fileChooser.showOpenDialog(null);
+
         if (file != null) {
             openImageFile(file);
             updateRecentFileMenu(file);
             mCurrentFile = file;
         }
+        mIsOpenDialogBox = false;
     }
 
     private void save(File file) {
@@ -948,6 +967,8 @@ public class Controller implements Initializable{
 
     // save an image file using save as
     private void saveAs() {
+        mIsOpenDialogBox = true;
+
         // create a new file chooser
         FileChooser fileChooser = new FileChooser();
 
@@ -958,10 +979,13 @@ public class Controller implements Initializable{
 
         // open the file choose dialog box and try to update with the selected image
         File file = fileChooser.showSaveDialog(null);
+
+        // only try to save if file
         if (file != null) {
             updateRecentFileMenu(file);
             save(file);
         }
+        mIsOpenDialogBox = false;
     }
 
 
@@ -993,7 +1017,8 @@ public class Controller implements Initializable{
     // get about info
     private void getAbout() {
         Alert alert = new Alert(Alert.AlertType.INFORMATION, "Picture This... " + "\n" + "by Ramon Rodriguez");
-        alert.showAndWait().filter(response -> response == ButtonType.OK);
+        mIsOpenDialogBox = true;
+        alert.showAndWait().filter(response -> response == ButtonType.OK).ifPresent(response -> mIsOpenDialogBox = false);
     }
 
 }
