@@ -8,6 +8,10 @@ draw shape: circle or square
 color with paint: color picker tool and bucket, recolor what area?
 touch-up: change settings & apply
 filter: drop-down with auto-filters
+    -tint
+    -sepia
+    -grayscale
+    -black & white
 text: draw text box and type in it
 
 

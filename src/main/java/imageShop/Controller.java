@@ -1,16 +1,13 @@
 package imageShop;
 
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.scene.Group;
 import javafx.scene.effect.ColorAdjust;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.Pane;
 import javafx.scene.shape.*;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.SnapshotParameters;
@@ -25,66 +22,98 @@ import javafx.stage.FileChooser;
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.FileWriter;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.ResourceBundle;
 
 public class Controller implements Initializable{
 
-    private enum Pen {
-        CIR, SQR, FIL, OTHER
-    }
+    private enum PenShape {CIRCLE, SQUARE}
+    private enum DrawTool {BUCKET, PEN}
+    private enum ActionSet {DRAW, EFFECTS, FILTERS}
 
-    private enum FilterStyle {
-        SAT, DRK, OTHER
-    }
+    private static final double DOUBLE_THRESHOLD = 0.1;
 
-    public static final double DOUBLE_THRESHOLD = 0.1;
-
-    private int penSize = 50;
-    private Pen penStyle = Pen.CIR;
-    private FilterStyle mFilterStyle = FilterStyle.DRK;
-
+    private ActionSet mActionSet;
+    private Color mColor = Color.rgb(25, 150, 255);
+    private DrawTool mDrawTool;
+    private PenShape mPenShape;
+    private int mPenSize;
     private Rectangle mRectangle;
     private double xPos, yPos, hPos, wPos;
     private boolean mUserIsCurrentlySelecting = false;
-    private Color mColor = Color.WHITE;
-    private ColorAdjust mColorAdjust = new ColorAdjust();
 
+    private ColorAdjust mColorAdjust = new ColorAdjust();
     private ArrayList<Shape> removeShapes = new ArrayList<>(1000);
 
-    @FXML private AnchorPane mAnchorPane;
-    @FXML private ImageView mImageView;
-
+    @FXML private MenuItem menuNew;
+    @FXML private MenuItem menuOpen;
     @FXML private Menu menuOpenRecent;
     @FXML private MenuItem menuRecentFile1;
     @FXML private MenuItem menuRecentFile2;
     @FXML private MenuItem menuRecentFile3;
     @FXML private MenuItem menuRecentFile4;
     @FXML private MenuItem menuRecentFile5;
+    @FXML private MenuItem menuClose;
+    @FXML private MenuItem menuSave;
+    @FXML private MenuItem menuSaveAs;
+    @FXML private MenuItem menuQuit;
+    @FXML private MenuItem menuUndo;
+    @FXML private MenuItem menuRedo;
+    @FXML private MenuItem menuStartOver;
+    @FXML private MenuItem menuHelp;
+    @FXML private MenuItem menuAbout;
 
-    @FXML private ToggleGroup mToggleGroup = new ToggleGroup();
-    @FXML private ToggleButton tgbSquare;
-    @FXML private ToggleButton tgbCircle;
-    @FXML private ToggleButton tgbFilter;
-    // ADD MORE SHAPES???
+    @FXML private ToolBar tbMain;
+    @FXML private ToggleButton tgbDraw;
+    @FXML private ToggleButton tgbEffects;
+    @FXML private ToggleButton tgbFilters;
+    @FXML private Button btnUndo;
+    @FXML private Button btnRedo;
+    @FXML private Button btnStartOver;
 
-    @FXML private MenuButton menuTouchUp;
+    @FXML private Pane pnTools;
 
+    @FXML private Group grpDraw;
+    @FXML private Group grpColor;
+    @FXML private ToggleButton tgbPickColor;
     @FXML private ColorPicker cpkColor;
-    @FXML private Slider sldSize;
-    @FXML private Slider sldBrightness;
-    @FXML private Slider sldContrast;
-    @FXML private Slider sldHue;
-    @FXML private Slider sldSaturate;
+    @FXML private Group grpDrawTool;
+    @FXML private ToggleButton tgbBucket;
+    @FXML private ToggleButton tgbPen;
+    @FXML private Group grpPenDetails;
+    @FXML private ToggleButton tgbCircle;
+    @FXML private ToggleButton tgbSquare;
+    @FXML private Slider sldPenSize;
+    @FXML private Button btnResetPenSize;
+    @FXML private Slider sldPenPressure;
+    @FXML private Button btnResetPenPressure;
 
+    @FXML private Group grpEffects;
+    @FXML private ToggleButton tgbSelectArea;
+    @FXML private Button btnResetEffects;
+    @FXML private Slider sldBrightness;
     @FXML private Button btnResetBrightness;
+    @FXML private Slider sldContrast;
     @FXML private Button btnResetContrast;
+    @FXML private Slider sldHue;
     @FXML private Button btnResetHue;
+    @FXML private Slider sldSaturate;
     @FXML private Button btnResetSaturate;
 
+    @FXML private Group grpFilters;
+    @FXML private Button btnGreyscale;
+    @FXML private Button btnSepia;
+    @FXML private Button btnInvert;
+
+    @FXML private ToggleGroup tgActionSet = new ToggleGroup();
+    @FXML private ToggleGroup tgDrawTool = new ToggleGroup();
+    @FXML private ToggleGroup tgPenShape = new ToggleGroup();
+
+    @FXML private AnchorPane mAnchorPane;
+    @FXML private ImageView mImageView;
 
 
     @FXML void menuOpenAction(ActionEvent event) {
@@ -136,7 +165,28 @@ public class Controller implements Initializable{
     }
 
     @FXML void menuSaveAsAction(ActionEvent event) {
-        throw new RuntimeException("TO DO");
+            // create a new file chooser
+            FileChooser fileChooser = new FileChooser();
+
+            // create file extension filters and add them to the file chooser
+            FileChooser.ExtensionFilter extFilterJPG = new FileChooser.ExtensionFilter("JPG files (*.jpg)", "*.JPG");
+            FileChooser.ExtensionFilter extFilterPNG = new FileChooser.ExtensionFilter("PNG files (*.png)", "*.PNG");
+            fileChooser.getExtensionFilters().addAll(extFilterJPG, extFilterPNG);
+
+            // open the file choose dialog box and try to update with the selected image
+            File file = fileChooser.showSaveDialog(null);
+
+            if (file != null) {
+                try {
+                    FileWriter fileWriter = null;
+                    fileWriter = new FileWriter(file);
+                    fileWriter.write(file.getName());
+                    fileWriter.close();
+                } catch (Exception e) {
+                    System.out.println("there was an error loading the image file: ");
+                    System.out.println("  " + e);
+                }
+            }
     }
 
     @FXML void menuQuitAction() {
@@ -169,30 +219,73 @@ public class Controller implements Initializable{
     public void initialize(URL location, ResourceBundle resourceBundle) {
 
         // set a back image
+        this.mImageView.setImage(getSnapshot());
         CommandCenter.getInstance().addUndoImage(getSnapshot());
         CommandCenter.getInstance().setImageView(this.mImageView);
 
+        // assign toggle groups
+        tgbDraw.setToggleGroup(tgActionSet);
+        tgbEffects.setToggleGroup(tgActionSet);
+        tgbFilters.setToggleGroup(tgActionSet);
+        tgbBucket.setToggleGroup(tgDrawTool);
+        tgbPen.setToggleGroup(tgDrawTool);
+        tgbCircle.setToggleGroup(tgPenShape);
+        tgbSquare.setToggleGroup(tgPenShape);
 
-        // set the toggles
-        tgbCircle.setToggleGroup(mToggleGroup);
-        tgbSquare.setToggleGroup(mToggleGroup);
-        tgbFilter.setToggleGroup(mToggleGroup);
-        tgbCircle.setSelected(true);
+        // assign default color
+        cpkColor.setValue(mColor);
 
         // hide open recent - nothing available yet!
         hideRecentFileMenu();
 
-        // update pen property based on toggle selection
-        mToggleGroup.selectedToggleProperty().addListener((observable, oldValue, newValue) -> {
+        // hide the tools pain
+        hideToolPanel();
+
+        // no action set yet
+
+
+
+        // update ActionSet toggle group
+        tgActionSet.selectedToggleProperty().addListener((observable, oldValue, newValue) -> {
+            if (newValue == tgbDraw) {
+                mActionSet = ActionSet.DRAW;
+                if (mDrawTool == DrawTool.BUCKET) {
+                    tgbDraw.setSelected(true);
+                } else {
+                    tgbPen.setSelected(true);
+                }
+                showDrawGroup();
+            } else if (newValue == tgbEffects) {
+                mActionSet = ActionSet.EFFECTS;
+                showEffectsGroup();
+            } else if (newValue == tgbFilters) {
+                mActionSet = ActionSet.FILTERS;
+                showFilterGroup();
+            }
+        });
+
+        // update DrawTool toggle group
+        tgDrawTool.selectedToggleProperty().addListener((observable, oldValue, newValue) -> {
+            if (newValue == tgbBucket) {
+                mDrawTool = DrawTool.BUCKET;
+                grpPenDetails.setVisible(false);
+            } else if (newValue == tgbPen) {
+                mDrawTool = DrawTool.PEN;
+                grpPenDetails.setVisible(true);
+                if (mPenShape == PenShape.SQUARE) {
+                    tgbSquare.setSelected(true);
+                } else {
+                    tgbCircle.setSelected(true);
+                }
+            }
+        });
+
+        // update PenShape toggle group
+        tgPenShape.selectedToggleProperty().addListener((observable, oldValue, newValue) -> {
             if (newValue == tgbCircle) {
-                penStyle = Pen.CIR;
+                mPenShape = PenShape.CIRCLE;
             } else if (newValue == tgbSquare) {
-                penStyle = Pen.SQR;
-            } else if (newValue == tgbFilter) {
-                penStyle = Pen.FIL;
-                menuTouchUp.show(); // TEST!!!
-            } else {
-                penStyle = Pen.CIR;
+                mPenShape = PenShape.SQUARE;
             }
         });
 
@@ -200,9 +293,8 @@ public class Controller implements Initializable{
         cpkColor.setOnAction(event -> mColor = cpkColor.getValue());
 
         // update size of pen based on slider
-        sldSize.valueProperty().addListener((observable, oldValue, newValue) -> {
-            double temp = (Double) newValue;
-            penSize = (int) Math.round(temp);
+        sldPenSize.valueProperty().addListener((observable, oldValue, newValue) -> {
+            mPenSize = (int) newValue;
         });
 
 
@@ -212,7 +304,7 @@ public class Controller implements Initializable{
 
         // action when mouse pressed: get x,y of mouse if pressed when using a filter
         mImageView.addEventFilter(MouseEvent.MOUSE_PRESSED, mouseEvent -> {
-            if (penStyle == Pen.FIL) {
+            if (mActionSet == ActionSet.EFFECTS && tgbSelectArea.isSelected()) {
                 if (mUserIsCurrentlySelecting) {
                     mAnchorPane.getChildren().remove(mRectangle);
                     mUserIsCurrentlySelecting = false;
@@ -233,13 +325,13 @@ public class Controller implements Initializable{
 
         // draw if mouse is dragged while pen is selected
         mImageView.addEventFilter(MouseEvent.MOUSE_DRAGGED, mouseEvent -> {
-            if (penStyle == Pen.CIR || penStyle == Pen.SQR) {
+            if (mActionSet == ActionSet.DRAW && (mPenShape == PenShape.CIRCLE || mPenShape == PenShape.SQUARE)) {
                 xPos = mouseEvent.getX();
                 yPos = mouseEvent.getY();
-                Shape penShape = Controller.this.getPenShape();
+                Shape penShape = Controller.this.getPenShapeShape();
                 mAnchorPane.getChildren().add(penShape);
                 removeShapes.add(penShape);
-            } else if (penStyle == Pen.FIL && mUserIsCurrentlySelecting) {
+            } else if (mActionSet == ActionSet.EFFECTS && mUserIsCurrentlySelecting) {
                 hPos = mouseEvent.getX();
                 wPos = mouseEvent.getY();
                 Controller.this.updateRectangle(xPos, yPos, hPos, wPos);
@@ -249,26 +341,19 @@ public class Controller implements Initializable{
 
         // action when mouse released:
         mImageView.addEventFilter(MouseEvent.MOUSE_RELEASED, mouseEvent -> {
-
-            System.out.println("mouse released.  pen style: " + penStyle);
-
-            if (penStyle == Pen.CIR || penStyle == Pen.SQR) {
-                // update action - save current, save back, reset sliders, update with current
-
+            if (mActionSet == ActionSet.DRAW && (mPenShape == PenShape.CIRCLE || mPenShape == PenShape.SQUARE)) {
                 CommandCenter.getInstance().storeLastImageAsUndo();
                 Image currentImage = getSnapshot();
                 resetTouchUpSliders();
                 CommandCenter.getInstance().setImageAndView(currentImage);
                 mAnchorPane.getChildren().removeAll(removeShapes);
                 removeShapes.clear();
-
-            } else if (penStyle == Pen.FIL && mUserIsCurrentlySelecting) {
+            } else if (mActionSet == ActionSet.EFFECTS && mUserIsCurrentlySelecting) {
 
                 wPos = mouseEvent.getX();
                 hPos = mouseEvent.getY();
 
                 updateRectangle(xPos, yPos, wPos, hPos);
-
 
 //                    Image currentImage = CommandCenter.getInstance().getImage();
 //                    Image transformImage = currentImage;
@@ -324,8 +409,6 @@ public class Controller implements Initializable{
         btnResetContrast.setOnAction(event -> sldContrast.setValue(0.0));
         btnResetHue.setOnAction(event -> sldHue.setValue(0.0));
         btnResetSaturate.setOnAction(event -> sldSaturate.setValue(0.0));
-
-
     }
 
 
@@ -340,7 +423,6 @@ public class Controller implements Initializable{
         mColorAdjust.setHue(sldHue.getValue() / 100.0);
         mColorAdjust.setSaturation(sldSaturate.getValue() / 100.0);
         mImageView.setEffect(mColorAdjust);
-        updateTouchUpMenuColor();
     }
 
     private void updateColorAdjustEffectForSelection() {
@@ -351,18 +433,6 @@ public class Controller implements Initializable{
         Image selectionImage = getSnapshotForSelection();
         ImageView selection = new ImageView();
         selection.setEffect(mColorAdjust);
-        updateTouchUpMenuColor();
-    }
-
-    // CHANGE THESE COLORS!!!
-    private void updateTouchUpMenuColor() {
-        boolean allSlidersAtZero = isZero(sldBrightness.getValue()) && isZero(sldContrast.getValue())
-            && isZero(sldHue.getValue()) && isZero(sldSaturate.getValue());
-
-        String sStyle = (allSlidersAtZero) ? ("-fx-border-color:lightgrey; -fx-background-color: lightgrey;")
-                : ("-fx-border-color:red; -fx-background-color: blue;");
-
-        menuTouchUp.setStyle(sStyle);
     }
 
     // http://stackoverflow.com/questions/18260213/how-to-test-if-a-double-is-zero
@@ -393,12 +463,12 @@ public class Controller implements Initializable{
     }
 
     // get the shape of the pen
-    private Shape getPenShape() {
+    private Shape getPenShapeShape() {
         Shape penShape = null;
-        if (penStyle == Pen.CIR) {
-            penShape = new Circle(xPos, yPos, penSize);
-        } else if (penStyle == Pen.SQR) {
-            penShape = new Rectangle(xPos, yPos, penSize, penSize);
+        if (this.mPenShape == PenShape.CIRCLE) {
+            penShape = new Circle(xPos, yPos, mPenSize);
+        } else if (this.mPenShape== PenShape.SQUARE) {
+            penShape = new Rectangle(xPos, yPos, mPenSize, mPenSize);
         }
         penShape.setFill(mColor);
         return penShape;
@@ -466,5 +536,50 @@ public class Controller implements Initializable{
         }
     }
 
+    private void hideToolPanel() {
+        pnTools.setVisible(false);
+//        pnTools.setStyle("-fx-border-color: lightgrey;");
+        pnTools.setManaged(false);
+    }
 
+    private void hideDraw() {
+        grpDraw.setVisible(false);
+        grpColor.setVisible(false);
+        grpDrawTool.setVisible(false);
+        grpPenDetails.setVisible(false);
+    }
+
+    private void hideEffects() {
+        grpEffects.setVisible(false);
+    }
+
+    private void hideFilters() {
+        grpFilters.setVisible(false);
+    }
+
+    private void showDrawGroup() {
+        pnTools.setManaged(true);
+        pnTools.setVisible(true);
+        grpDraw.setVisible(true);
+        grpColor.setVisible(true);
+        grpDrawTool.setVisible(true);
+        hideEffects();
+        hideFilters();
+    }
+
+    private void showEffectsGroup() {
+        pnTools.setManaged(true);
+        pnTools.setVisible(true);
+        grpEffects.setVisible(true);
+        hideDraw();
+        hideFilters();
+    }
+
+    private void showFilterGroup() {
+        pnTools.setManaged(true);
+        pnTools.setVisible(true);
+        grpFilters.setVisible(true);
+        hideEffects();
+        hideDraw();
+    }
 }
