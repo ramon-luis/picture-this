@@ -63,6 +63,8 @@
                   <Button fx:id="btnRedo" disable="true" layoutX="164.0" layoutY="10.0" mnemonicParsing="false" text="Redo" />
                   <Separator layoutX="190.0" layoutY="10.0" prefHeight="27.0" prefWidth="21.0" />
                   <Button fx:id="btnStartOver" disable="true" layoutX="394.0" layoutY="10.0" mnemonicParsing="false" text="Start Over" />
+                  <Separator layoutX="324.0" layoutY="10.0" prefHeight="27.0" prefWidth="21.0" />
+                      <ToggleButton fx:id="tgbSelectArea" mnemonicParsing="false" text="Select Area" />
               </items>
             </ToolBar>
             <Pane fx:id="pnTools" prefHeight="90.0" prefWidth="1350.0">
@@ -129,12 +131,12 @@
                         </Group>
                      </children>
                   </Group>
-                  <Group fx:id="grpEffects" layoutX="7.0" layoutY="4.0" visible="false">
+                  <Group fx:id="grpEffects" layoutX="7.0" layoutY="4.0">
                      <children>
                         <Group>
                            <children>
-                                  <ToggleButton fx:id="tgbSelectArea" layoutY="3.0" mnemonicParsing="false" text="Select Area" />
-                              <Button fx:id="btnResetEffects" layoutY="36.0" mnemonicParsing="false" prefHeight="27.0" prefWidth="88.0" text="Reset All" />
+                              <Button fx:id="btnApplyEffects" mnemonicParsing="false" prefHeight="27.0" prefWidth="88.0" text="Apply" />
+                              <Button fx:id="btnResetEffects" layoutY="36.0" mnemonicParsing="false" prefHeight="27.0" prefWidth="88.0" text="Cancel" />
                            </children>
                         </Group>
                         <Group fx:id="grpContrast" layoutX="277.0" layoutY="-8.0">

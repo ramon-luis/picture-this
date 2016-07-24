@@ -113,6 +113,7 @@ public class Controller implements Initializable{
 
     @FXML private Group grpEffects;
     @FXML private ToggleButton tgbSelectArea;
+    @FXML private Button btnApplyEffects;
     @FXML private Button btnResetEffects;
     @FXML private Slider sldBrightness;
     @FXML private Button btnResetBrightness;
@@ -251,6 +252,7 @@ public class Controller implements Initializable{
                 }
                 showDrawGroup();
                 removeSelection();
+                resetEffectsSliders();
             } else if (newValue == tgbEffects) {
                 mActionSet = ActionSet.EFFECTS;
                 tgbEffects.setSelected(true);
@@ -260,6 +262,7 @@ public class Controller implements Initializable{
                 tgbFilters.setSelected(true);
                 showFilterGroup();
                 removeSelection();
+                resetEffectsSliders();
             }
 
 
@@ -427,7 +430,7 @@ public class Controller implements Initializable{
         });
 
         // **************************************** //
-        // **  RESET BUTTONS FOR EFFECTS SLIDERS ** //
+        // **     BUTTONS FOR EFFECTS SLIDERS    ** //
         // **************************************** //
 
         btnResetBrightness.setOnAction(event -> sldBrightness.setValue(DEFAULT_EFFECTS_VALUE));
@@ -435,6 +438,7 @@ public class Controller implements Initializable{
         btnResetHue.setOnAction(event -> sldHue.setValue(DEFAULT_EFFECTS_VALUE));
         btnResetSaturate.setOnAction(event -> sldSaturate.setValue(DEFAULT_EFFECTS_VALUE));
         btnResetEffects.setOnAction(event -> resetEffectsSliders());
+        btnApplyEffects.setOnAction(event -> updateImageAndProperties());
 
         // **************************************** //
         // **        UNDO AND REDO BUTTONS       ** //
