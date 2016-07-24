@@ -134,30 +134,4 @@ public class CommandCenter {
         mOriginalImage = originalImage;
     }
 
-    //    public void undo() {
-//        // only undo if there is a history of back images
-//        if (!sBackImages.isEmpty()) {
-//            // store the current image in forward images for redo
-//            Image currentImage = this.mImage;
-//            sForwardImages.push(currentImage);
-//
-//            // update with the undo image
-//            Image undoImage = sBackImages.pop();
-//            setImageAndView(undoImage);
-//        }
-//    }
-//
-//    public void redo() {
-//        // only redo if there is a history of forward images
-//        if (!sForwardImages.isEmpty()) {
-//            // store the current image in back images for undo
-//            Image currentImage = this.mImage;
-//            sBackImages.push(currentImage);
-//
-//            // update with the undo image
-//            Image redoImage = sForwardImages.pop();
-//            setImageAndView(redoImage);
-//        }
-//    }
-
 }

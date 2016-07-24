@@ -335,10 +335,9 @@ public class Controller implements Initializable{
 
         // mouse pressed
         mImageView.addEventFilter(MouseEvent.MOUSE_PRESSED, mouseEvent -> {
+            System.out.println("rectangle when pressed: " + mRectangle);
             if (mActionSet == ActionSet.EFFECTS) {
-                System.out.println("rectangle: " + mRectangle);
                 if (mRectangle != null) {
-                    System.out.println("rectangle exists");
                     removeSelection();
                 } else if (tgbSelectArea.isSelected()) {
                     startSelection(mouseEvent);
@@ -378,22 +377,6 @@ public class Controller implements Initializable{
                 fillFromBucket(mouseEvent);
             } else if (mActionSet == ActionSet.EFFECTS) {
                 updateRectangle(mouseEvent);
-
-//                    Image currentImage = CommandCenter.getInstance().getImage();
-//                    Image transformImage = currentImage;
-//
-//                    if (mFilterStyle == FilterStyle.DRK) {
-//                        transformImage = CommandCenter.getInstance().transformSelection(currentImage,
-//                                (x, y, c) -> (x > xPos && x < wPos) && (y > yPos && y < hPos) ?
-//                                        c.deriveColor(0.0, 1.0, 0.5, 1.0) : c);
-//                    } else if (mFilterStyle == FilterStyle.SAT) {
-//                        transformImage = CommandCenter.getInstance().transformSelection(currentImage,
-//                                (x, y, c) -> (x > xPos && x < wPos) && (y > yPos && y < hPos) ?
-//                                        c.deriveColor(0.0, 1.0 / 0.1, 1.0, 1.0) : c);
-//
-//                    }
-//                    CommandCenter.getInstance().setImageDataAndRefreshView__OLD(transformImage);
-
             }
             mouseEvent.consume();
         });
@@ -440,7 +423,7 @@ public class Controller implements Initializable{
 
         // saturate slider
         sldSaturate.valueProperty().addListener((observable, oldValue, newValue) -> {
-            Controller.this.updateColorAdjustEffect();
+            updateColorAdjustEffect();
         });
 
         // **************************************** //
@@ -553,22 +536,32 @@ public class Controller implements Initializable{
 
     // update the color adjust to current slider settings
     private void updateColorAdjustEffect() {
-        mColorAdjust.setBrightness(sldBrightness.getValue() / 100.0);
-        mColorAdjust.setContrast(sldContrast.getValue() / 100.0);
-        mColorAdjust.setHue(sldHue.getValue() / 100.0);
-        mColorAdjust.setSaturation(sldSaturate.getValue() / 100.0);
-        mImageView.setEffect(mColorAdjust);
+        if (mRectangle != null) {
+            updateColorAdjustEffectForSelection();
+        } else {
+            mColorAdjust.setBrightness(sldBrightness.getValue() / 100.0);
+            mColorAdjust.setContrast(sldContrast.getValue() / 100.0);
+            mColorAdjust.setHue(sldHue.getValue() / 100.0);
+            mColorAdjust.setSaturation(sldSaturate.getValue() / 100.0);
+            mImageView.setEffect(mColorAdjust);
+        }
     }
 
     private void updateColorAdjustEffectForSelection() {
-        mColorAdjust.setBrightness(sldBrightness.getValue() / 100.0);
-        mColorAdjust.setContrast(sldContrast.getValue() / 100.0);
-        mColorAdjust.setHue(sldHue.getValue() / 100.0);
-        mColorAdjust.setSaturation(sldSaturate.getValue() / 100.0);
-        Image selectionImage = getSnapshotForSelection();
-        ImageView selection = new ImageView();
-        selection.setImage(selectionImage);
-        selection.setEffect(mColorAdjust);
+        if (mRectangle != null) {
+            mColorAdjust.setBrightness(sldBrightness.getValue() / 100.0);
+            mColorAdjust.setContrast(sldContrast.getValue() / 100.0);
+            mColorAdjust.setHue(sldHue.getValue() / 100.0);
+            mColorAdjust.setSaturation(sldSaturate.getValue() / 100.0);
+            Image selectionImage = getSnapshotForSelection();
+            ImageView selection = new ImageView();
+            selection.setX(mRectangle.getX());
+            selection.setY(mRectangle.getY());
+            selection.setImage(selectionImage);
+            selection.setEffect(mColorAdjust);
+            mAnchorPane.getChildren().add(selection);
+            mRectangle.setVisible(true);
+        }
     }
 
     // check if double is zero -> used for sliders
@@ -580,15 +573,16 @@ public class Controller implements Initializable{
     // get a "snap" of screen's current image
     private Image getSnapshot() {
         SnapshotParameters snapshotParameters = new SnapshotParameters();
-        //snapshotParameters.setViewport(new Rectangle2D(0, 0, mImageView.getFitWidth(), mImageView.getFitHeight()));
+        snapshotParameters.setViewport(new Rectangle2D(0, 0, mImageView.getFitWidth(), mImageView.getFitHeight()));
         return mAnchorPane.snapshot(snapshotParameters, null);
     }
 
     // get snapshot from rectangle selection
     private Image getSnapshotForSelection() {
         SnapshotParameters snapshotParameters = new SnapshotParameters();
-        snapshotParameters.setViewport(new Rectangle2D(mRectangle.getX(), mRectangle.getY(), mRectangle.getWidth(), mRectangle.getHeight()));
-        return mAnchorPane.snapshot(snapshotParameters, null);
+        mRectangle.setVisible(false);
+        snapshotParameters.setViewport(new Rectangle2D(mRectangle.getX(),mRectangle.getY(),mRectangle.getWidth(), mRectangle.getHeight()));
+        return mImageView.snapshot(snapshotParameters, null);
     }
 
     // set effects sliders to 0 (base)

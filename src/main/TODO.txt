@@ -2,7 +2,7 @@ TODO
 1. paint bucket - DONE
 2. apply effects to selection
 3. effects & undo: sliders or change to buttons
-4. WHY IS IMAGE MOVING UP AND RIGHT???
+4. WHY IS IMAGE MOVING UP AND RIGHT??? - DONE
 5. redo images in wrong order
 5. image pattern
 5. mono - two tone or pick?
