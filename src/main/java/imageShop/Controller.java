@@ -461,8 +461,6 @@ public class Controller implements Initializable{
 
     // grayscale filter
     private void applyGrayscaleFilter() {
-        CommandCenter.getInstance().storeLastImageAsUndo();
-        enableUndo();
         WritableImage grayscaleImage = new WritableImage((int) mImageView.getImage().getWidth(), (int) mImageView.getImage().getHeight());
         PixelWriter pixelWriter = grayscaleImage.getPixelWriter();
         for (int x = 0; x < mImageView.getImage().getWidth(); x++) {
@@ -471,16 +469,12 @@ public class Controller implements Initializable{
                 pixelWriter.setColor(x, y, currentColor.grayscale());
             }
         }
-        resetEffectsSliders();
-        CommandCenter.getInstance().setImageAndView(grayscaleImage);
-        mAnchorPane.getChildren().removeAll(removeShapes);
-        removeShapes.clear();
+        mImageView.setImage(grayscaleImage);
+        updateImageAndProperties();
     }
 
     // invert filter
     private void applyInvertFilter() {
-        CommandCenter.getInstance().storeLastImageAsUndo();
-        enableUndo();
         WritableImage inverseImage = new WritableImage((int) mImageView.getImage().getWidth(), (int) mImageView.getImage().getHeight());
         PixelWriter pixelWriter = inverseImage.getPixelWriter();
         for (int x = 0; x < mImageView.getImage().getWidth(); x++) {
@@ -489,34 +483,21 @@ public class Controller implements Initializable{
                 pixelWriter.setColor(x, y, currentColor.invert());
             }
         }
-        resetEffectsSliders();
-        CommandCenter.getInstance().setImageAndView(inverseImage);
-        mAnchorPane.getChildren().removeAll(removeShapes);
-        removeShapes.clear();
+        mImageView.setImage(inverseImage);
+        updateImageAndProperties();
     }
 
     // sepia filter
     private void applySepiaFilter() {
-        CommandCenter.getInstance().storeLastImageAsUndo();
-        enableUndo();
-
         SepiaTone sepiaTone = new SepiaTone();
         sepiaTone.setLevel(0.70);
         mImageView.setEffect(sepiaTone);
-        Image currentImage = getSnapshot();
-
-        resetEffectsSliders();
-
-        CommandCenter.getInstance().setImageAndView(currentImage);
-        mAnchorPane.getChildren().removeAll(removeShapes);
-        removeShapes.clear();
+        updateImageAndProperties();
     }
 
-    // sepia filter
+    // mono filter
     private void applyMonoFilter() {
         double monoThreshold = 1.0;
-        CommandCenter.getInstance().storeLastImageAsUndo();
-        enableUndo();
         WritableImage monoImage = new WritableImage((int) mImageView.getImage().getWidth(), (int) mImageView.getImage().getHeight());
         PixelWriter pixelWriter = monoImage.getPixelWriter();
         for (int x = 0; x < mImageView.getImage().getWidth(); x++) {
@@ -528,10 +509,8 @@ public class Controller implements Initializable{
                     pixelWriter.setColor(x, y, newColor);
             }
         }
-        resetEffectsSliders();
-        CommandCenter.getInstance().setImageAndView(monoImage);
-        mAnchorPane.getChildren().removeAll(removeShapes);
-        removeShapes.clear();
+        mImageView.setImage(monoImage);
+        updateImageAndProperties();
     }
 
     // **************************************** //
@@ -577,8 +556,8 @@ public class Controller implements Initializable{
     // get a "snap" of screen's current image
     private Image getSnapshot() {
         SnapshotParameters snapshotParameters = new SnapshotParameters();
-        snapshotParameters.setViewport(new Rectangle2D(0, 0, mImageView.getFitWidth(), mImageView.getFitHeight()));
-        return mAnchorPane.snapshot(snapshotParameters, null);
+        //snapshotParameters.setViewport(new Rectangle2D(0, 0, mImageView.getFitWidth(), mImageView.getFitHeight()));
+        return mImageView.snapshot(snapshotParameters, null);
     }
 
     // get snapshot from rectangle selection
