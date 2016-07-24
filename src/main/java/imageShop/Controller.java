@@ -60,8 +60,8 @@ public class Controller implements Initializable{
     private int mPenSize;
     private double mPenPressure;
     private Rectangle mRectangle;
-    private double xPos, yPos, hPos, wPos;
-    private boolean mUserIsCurrentlySelecting = false;
+    private double xPos, yPos, hPos, wPos, xStart, yStart;
+    private boolean mIsSelection = false;
     private boolean mUserIsPickingColor = false;
     private boolean mIsOpenDialogBox = false;
     private ColorAdjust mColorAdjust = new ColorAdjust();
@@ -240,9 +240,7 @@ public class Controller implements Initializable{
 
         // ActionSet toggle group
         tgActionSet.selectedToggleProperty().addListener((observable, oldValue, newValue) -> {
-            if (newValue == oldValue) {
-                tgActionSet.getSelectedToggle().setSelected(true);
-            } else if (newValue == tgbDraw) {
+            if (newValue == tgbDraw) {
                 mActionSet = ActionSet.DRAW;
                 tgbDraw.setSelected(true);
                 if (mDrawTool == DrawTool.BUCKET) {
@@ -252,6 +250,7 @@ public class Controller implements Initializable{
                     grpPenDetails.setVisible(true);
                 }
                 showDrawGroup();
+                removeSelection();
             } else if (newValue == tgbEffects) {
                 mActionSet = ActionSet.EFFECTS;
                 tgbEffects.setSelected(true);
@@ -260,7 +259,10 @@ public class Controller implements Initializable{
                 mActionSet = ActionSet.FILTERS;
                 tgbFilters.setSelected(true);
                 showFilterGroup();
+                removeSelection();
             }
+
+
         });
 
         // DrawTool toggle group
@@ -320,8 +322,12 @@ public class Controller implements Initializable{
                     setMouseToBucket(mouseEvent);
                 } else if (mActionSet == ActionSet.DRAW && mDrawTool == DrawTool.PEN && mPenShape != null) {
                     setMouseToPenShape(mouseEvent);
+                } else if (mActionSet == ActionSet.EFFECTS && tgbSelectArea.isSelected()) {
+                    setMouseToCross(mouseEvent);
+                } else {
+                    ((Node) mouseEvent.getSource()).setCursor(Cursor.DEFAULT);
                 }
-            }else {
+            } else {
                 ((Node) mouseEvent.getSource()).setCursor(Cursor.DEFAULT);
             }
             mouseEvent.consume();
@@ -329,33 +335,36 @@ public class Controller implements Initializable{
 
         // mouse pressed
         mImageView.addEventFilter(MouseEvent.MOUSE_PRESSED, mouseEvent -> {
-            if (mActionSet == ActionSet.DRAW && mUserIsPickingColor) {
-                pickColorFromDropper(mouseEvent);
-            } else if (mActionSet == ActionSet.DRAW && mDrawTool == DrawTool.BUCKET) {
-                CommandCenter.getInstance().storeLastImageAsUndo();
-                enableUndo();
-                fillFromBucket(mouseEvent);
-            } else if (mActionSet == ActionSet.DRAW && mDrawTool == DrawTool.PEN && mPenShape != null) {
-                drawPen(mouseEvent);
-            } else if (mActionSet == ActionSet.EFFECTS && tgbSelectArea.isSelected()) {
-                if (mUserIsCurrentlySelecting) {
+            if (mActionSet == ActionSet.EFFECTS) {
+                System.out.println("rectangle: " + mRectangle);
+                if (mRectangle != null) {
+                    System.out.println("rectangle exists");
                     removeSelection();
-                } else {
+                } else if (tgbSelectArea.isSelected()) {
                     startSelection(mouseEvent);
                 }
+            } else if (mActionSet == ActionSet.DRAW && mUserIsPickingColor) {
+                pickColorFromDropper(mouseEvent);
+            } else if (mActionSet == ActionSet.DRAW && mDrawTool == DrawTool.BUCKET) {
+                // decided to just fill on release for now
+//                CommandCenter.getInstance().storeLastImageAsUndo();
+//                enableUndo();
+//                fillFromBucket(mouseEvent);
+            } else if (mActionSet == ActionSet.DRAW && mDrawTool == DrawTool.PEN && mPenShape != null) {
+                drawPen(mouseEvent);
             }
             mouseEvent.consume();
         });
 
         // mouse dragged
         mImageView.addEventFilter(MouseEvent.MOUSE_DRAGGED, mouseEvent -> {
-            if (mActionSet == ActionSet.DRAW &&  mDrawTool == DrawTool.PEN && mPenShape != null) {
+            if (mActionSet == ActionSet.EFFECTS && tgbSelectArea.isSelected()) {
+                updateRectangle(mouseEvent);
+            } else if (mActionSet == ActionSet.DRAW &&  mDrawTool == DrawTool.PEN && mPenShape != null) {
                drawPen(mouseEvent);
             } else if (mActionSet == ActionSet.DRAW && mDrawTool == DrawTool.BUCKET) {
-                fillFromBucket(mouseEvent);
-            } else if (mActionSet == ActionSet.EFFECTS && mUserIsCurrentlySelecting) {
-                updateRectangle(mouseEvent);
-            }
+                //fillFromBucket(mouseEvent); // decided to just fill on release for now
+            } else
             mouseEvent.consume();
         });
 
@@ -364,8 +373,10 @@ public class Controller implements Initializable{
             if (mActionSet == ActionSet.DRAW && mDrawTool == DrawTool.PEN && mPenShape != null) {
                 updateImageAndProperties();
             } else if (mActionSet == ActionSet.DRAW && mDrawTool == DrawTool.BUCKET) {
-                //
-            } else if (mActionSet == ActionSet.EFFECTS && mUserIsCurrentlySelecting) {
+                CommandCenter.getInstance().storeLastImageAsUndo();
+                enableUndo();
+                fillFromBucket(mouseEvent);
+            } else if (mActionSet == ActionSet.EFFECTS) {
                 updateRectangle(mouseEvent);
 
 //                    Image currentImage = CommandCenter.getInstance().getImage();
@@ -598,6 +609,12 @@ public class Controller implements Initializable{
         removeShapes.clear();
     }
 
+    // change the mouse icon to cross hairs
+    private void setMouseToCross(MouseEvent mouseEvent) {
+        ((Node) mouseEvent.getSource()).setCursor(Cursor.CROSSHAIR);
+    }
+
+
     // change mouse icon to dropper
     private void setMouseToDropper(MouseEvent mouseEvent) {
         Image dropperImage = new Image(DROPPER_IMAGE, 25, 25, false, false);
@@ -756,36 +773,41 @@ public class Controller implements Initializable{
         mRectangle.setStroke(Color.WHITE);
         mRectangle.setOpacity(0.15);
         mAnchorPane.getChildren().add(mRectangle);
-        mUserIsCurrentlySelecting = true;
+        mIsSelection = true;
     }
 
     // remove rectangle selection
     private void removeSelection() {
         mAnchorPane.getChildren().remove(mRectangle);
-        mUserIsCurrentlySelecting = false;
+        mRectangle = null;
+        mIsSelection = false;
     }
 
     // update rectangle: used to invert shape based on mouse position
     private void updateRectangle(MouseEvent mouseEvent) {
-        // update end corner based on mouse
-        hPos = mouseEvent.getX();
-        wPos = mouseEvent.getY();
+        if (mRectangle != null) {
+            // natural starting and ending corners
+            double dStartX = xPos;
+            double dStartY = yPos;
+            double dEndX = mouseEvent.getX();
+            double dEndY = mouseEvent.getY();
 
-        // check if x and y are inverted
-        boolean bIsInvertedH = wPos < xPos;
-        boolean bIsInvertedV = hPos < yPos;
+            // check if x and y are inverted
+            boolean bIsInvertedH = dStartX > dEndX;
+            boolean bIsInvertedV = dStartY > dEndY;
 
-        // set the x, y, width, and height
-        double dX = !bIsInvertedH ? xPos: wPos;
-        double dY = !bIsInvertedV ? yPos : hPos;
-        double dWidth = !bIsInvertedH ? (wPos - xPos) : (xPos - wPos);
-        double dHeight = !bIsInvertedV ? (hPos - yPos) : (yPos - hPos);
+            // set the x, y, width, and height
+            double dX = !bIsInvertedH ? dStartX: dEndX;
+            double dY = !bIsInvertedV ? dStartY : dEndY;
+            double dWidth = !bIsInvertedH ? (dEndX - dStartX) : (dStartX - dEndX);
+            double dHeight = !bIsInvertedV ? (dEndY - dStartY) : (dStartY - dEndY);
 
-        // update rectangle
-        mRectangle.setX(dX);
-        mRectangle.setY(dY);
-        mRectangle.setWidth(dWidth);
-        mRectangle.setHeight(dHeight);
+            // update rectangle
+            mRectangle.setX(dX);
+            mRectangle.setY(dY);
+            mRectangle.setWidth(dWidth);
+            mRectangle.setHeight(dHeight);
+        }
     }
 
     // update the recent file menu
