@@ -48,6 +48,7 @@ public class Controller implements Initializable{
 
     private static final String DROPPER_IMAGE = "/images/dropper.png";
     private static final String BUCKET_IMAGE = "/images/bucket.png";
+    private static final String BACKGROUND_IMAGE = "/images/background.jpg";
     private static final double DOUBLE_THRESHOLD = 0.1;
     private static final double DEFAULT_PEN_SIZE = 20.0;
     private static final double DEFAULT_PEN_PRESSURE = 75.0;
@@ -136,6 +137,7 @@ public class Controller implements Initializable{
 
     @FXML private AnchorPane mAnchorPane;
     @FXML private ImageView mImageView;
+    @FXML private ImageView mSelectionView;
 
 
     @FXML void menuOpenAction(ActionEvent event) {
@@ -210,7 +212,9 @@ public class Controller implements Initializable{
         // **************************************** //
 
         // set a back image
+        // Image initialImage = new Image(BACKGROUND_IMAGE, mImageView.getFitWidth(), mImageView.getFitHeight(), false, false);
         Image initialImage = getSnapshot();
+
         mImageView.setImage(initialImage);
         CommandCenter.getInstance().setImageView(mImageView);
         CommandCenter.getInstance().setOriginalImage(initialImage);
@@ -241,6 +245,7 @@ public class Controller implements Initializable{
 
         // ActionSet toggle group
         tgActionSet.selectedToggleProperty().addListener((observable, oldValue, newValue) -> {
+            tgbSelectArea.setDisable(false);
             if (newValue == tgbDraw) {
                 mActionSet = ActionSet.DRAW;
                 tgbDraw.setSelected(true);
@@ -253,6 +258,7 @@ public class Controller implements Initializable{
                 showDrawGroup();
                 removeSelection();
                 resetEffectsSliders();
+                tgbSelectArea.setDisable(true);
             } else if (newValue == tgbEffects) {
                 mActionSet = ActionSet.EFFECTS;
                 tgbEffects.setSelected(true);
@@ -261,7 +267,6 @@ public class Controller implements Initializable{
                 mActionSet = ActionSet.FILTERS;
                 tgbFilters.setSelected(true);
                 showFilterGroup();
-                removeSelection();
                 resetEffectsSliders();
             }
 
@@ -325,7 +330,7 @@ public class Controller implements Initializable{
                     setMouseToBucket(mouseEvent);
                 } else if (mActionSet == ActionSet.DRAW && mDrawTool == DrawTool.PEN && mPenShape != null) {
                     setMouseToPenShape(mouseEvent);
-                } else if (mActionSet == ActionSet.EFFECTS && tgbSelectArea.isSelected()) {
+                } else if ((mActionSet == ActionSet.FILTERS || mActionSet == ActionSet.EFFECTS) && tgbSelectArea.isSelected()) {
                     setMouseToCross(mouseEvent);
                 } else {
                     ((Node) mouseEvent.getSource()).setCursor(Cursor.DEFAULT);
@@ -338,8 +343,7 @@ public class Controller implements Initializable{
 
         // mouse pressed
         mImageView.addEventFilter(MouseEvent.MOUSE_PRESSED, mouseEvent -> {
-            System.out.println("rectangle when pressed: " + mRectangle);
-            if (mActionSet == ActionSet.EFFECTS) {
+            if (mActionSet == ActionSet.FILTERS || mActionSet == ActionSet.EFFECTS) {
                 if (mRectangle != null) {
                     removeSelection();
                 } else if (tgbSelectArea.isSelected()) {
@@ -360,7 +364,7 @@ public class Controller implements Initializable{
 
         // mouse dragged
         mImageView.addEventFilter(MouseEvent.MOUSE_DRAGGED, mouseEvent -> {
-            if (mActionSet == ActionSet.EFFECTS && tgbSelectArea.isSelected()) {
+            if ((mActionSet == ActionSet.FILTERS || mActionSet == ActionSet.EFFECTS) && tgbSelectArea.isSelected()) {   // CHANGED TO TEST MONO
                 updateRectangle(mouseEvent);
             } else if (mActionSet == ActionSet.DRAW &&  mDrawTool == DrawTool.PEN && mPenShape != null) {
                drawPen(mouseEvent);
@@ -375,10 +379,9 @@ public class Controller implements Initializable{
             if (mActionSet == ActionSet.DRAW && mDrawTool == DrawTool.PEN && mPenShape != null) {
                 updateImageAndProperties();
             } else if (mActionSet == ActionSet.DRAW && mDrawTool == DrawTool.BUCKET) {
-                CommandCenter.getInstance().storeLastImageAsUndo();
-                enableUndo();
                 fillFromBucket(mouseEvent);
-            } else if (mActionSet == ActionSet.EFFECTS) {
+                updateImageAndProperties();
+            } else if (mActionSet == ActionSet.FILTERS || mActionSet == ActionSet.EFFECTS) {  // UDPATED TO TEST MONO
                 updateRectangle(mouseEvent);
             }
             mouseEvent.consume();
@@ -438,7 +441,7 @@ public class Controller implements Initializable{
         btnResetHue.setOnAction(event -> sldHue.setValue(DEFAULT_EFFECTS_VALUE));
         btnResetSaturate.setOnAction(event -> sldSaturate.setValue(DEFAULT_EFFECTS_VALUE));
         btnResetEffects.setOnAction(event -> resetEffectsSliders());
-        btnApplyEffects.setOnAction(event -> updateImageAndProperties());
+        btnApplyEffects.setOnAction(event -> applyImageEffects());
 
         // **************************************** //
         // **        UNDO AND REDO BUTTONS       ** //
@@ -461,12 +464,22 @@ public class Controller implements Initializable{
 
     // grayscale filter
     private void applyGrayscaleFilter() {
+        int iMinX = (mRectangle != null) ? (int) mRectangle.getX() : 0;
+        int iMinY = (mRectangle != null) ? (int) mRectangle.getY() : 0;
+        int iMaxX = (mRectangle != null) ? (int) mRectangle.getWidth() + iMinX : (int) mImageView.getImage().getWidth();
+        int iMaxY = (mRectangle != null) ? (int) mRectangle.getHeight() + iMinY: (int) mImageView.getImage().getHeight();
+
         WritableImage grayscaleImage = new WritableImage((int) mImageView.getImage().getWidth(), (int) mImageView.getImage().getHeight());
         PixelWriter pixelWriter = grayscaleImage.getPixelWriter();
         for (int x = 0; x < mImageView.getImage().getWidth(); x++) {
             for (int y = 0; y < mImageView.getImage().getHeight(); y++) {
                 Color currentColor = mImageView.getImage().getPixelReader().getColor(x, y);
-                pixelWriter.setColor(x, y, currentColor.grayscale());
+                Color newColor = currentColor.grayscale();
+                if (x > iMinX && x < iMaxX && y > iMinY && y < iMaxY) {
+                    pixelWriter.setColor(x, y, newColor);
+                } else {
+                    pixelWriter.setColor(x, y, currentColor);
+                }
             }
         }
         mImageView.setImage(grayscaleImage);
@@ -475,12 +488,22 @@ public class Controller implements Initializable{
 
     // invert filter
     private void applyInvertFilter() {
-        WritableImage inverseImage = new WritableImage((int) mImageView.getImage().getWidth(), (int) mImageView.getImage().getHeight());
+        int iMinX = (mRectangle != null) ? (int) mRectangle.getX() : 0;
+        int iMinY = (mRectangle != null) ? (int) mRectangle.getY() : 0;
+        int iMaxX = (mRectangle != null) ? (int) mRectangle.getWidth() + iMinX : (int) mImageView.getImage().getWidth();
+        int iMaxY = (mRectangle != null) ? (int) mRectangle.getHeight() + iMinY: (int) mImageView.getImage().getHeight();
+
+        WritableImage inverseImage = new WritableImage((int) mImageView.getFitWidth(), (int) mImageView.getFitHeight());
         PixelWriter pixelWriter = inverseImage.getPixelWriter();
         for (int x = 0; x < mImageView.getImage().getWidth(); x++) {
             for (int y = 0; y < mImageView.getImage().getHeight(); y++) {
                 Color currentColor = mImageView.getImage().getPixelReader().getColor(x, y);
-                pixelWriter.setColor(x, y, currentColor.invert());
+                Color newColor = currentColor.invert();
+                if (x > iMinX && x < iMaxX && y > iMinY && y < iMaxY) {
+                    pixelWriter.setColor(x, y, newColor);
+                } else {
+                    pixelWriter.setColor(x, y, currentColor);
+                }
             }
         }
         mImageView.setImage(inverseImage);
@@ -491,27 +514,55 @@ public class Controller implements Initializable{
     private void applySepiaFilter() {
         SepiaTone sepiaTone = new SepiaTone();
         sepiaTone.setLevel(0.70);
-        mImageView.setEffect(sepiaTone);
+        if (mRectangle != null) {
+            ImageView tempView = new ImageView();
+            Image tempImage = getSnapshotForSelection();
+            tempView.setImage(tempImage);
+            tempView.setEffect(sepiaTone);
+            mAnchorPane.getChildren().add(tempView);
+            tempView.setX(mRectangle.getX());
+            tempView.setY(mRectangle.getY());
+            Image sepiaImage = getSnapshot();
+            mAnchorPane.getChildren().remove(tempView);
+            mImageView.setImage(sepiaImage);
+        } else {
+            mImageView.setEffect(sepiaTone);
+            Image sepiaImage = getSnapshot();
+            sepiaTone.setLevel(0.0);
+            mImageView.setEffect(sepiaTone);
+            mImageView.setImage(sepiaImage);
+        }
         updateImageAndProperties();
     }
 
     // mono filter
     private void applyMonoFilter() {
         double monoThreshold = 1.0;
-        WritableImage monoImage = new WritableImage((int) mImageView.getImage().getWidth(), (int) mImageView.getImage().getHeight());
+        int iMinX = (mRectangle != null) ? (int) mRectangle.getX() : 0;
+        int iMinY = (mRectangle != null) ? (int) mRectangle.getY() : 0;
+        int iMaxX = (mRectangle != null) ? (int) mRectangle.getWidth() + iMinX : (int) mImageView.getImage().getWidth();
+        int iMaxY = (mRectangle != null) ? (int) mRectangle.getHeight() + iMinY: (int) mImageView.getImage().getHeight();
+
+        WritableImage monoImage = new WritableImage((int) mImageView.getFitWidth(), (int) mImageView.getFitHeight());
         PixelWriter pixelWriter = monoImage.getPixelWriter();
-        for (int x = 0; x < mImageView.getImage().getWidth(); x++) {
-            for (int y = 0; y < mImageView.getImage().getHeight(); y++) {
+        for (int x = 0; x < mImageView.getImage().getWidth() - 1; x++) {
+            for (int y = 0; y < mImageView.getImage().getHeight() - 1; y++) {
                 Color currentColor = mImageView.getImage().getPixelReader().getColor(x, y);
                 Color newColor = (currentColor.getRed() + currentColor.getRed() + currentColor.getBlue() < monoThreshold) ?
                         Color.BLACK : Color.WHITE;
-
+                if (x > iMinX && x < iMaxX && y > iMinY && y < iMaxY) {
                     pixelWriter.setColor(x, y, newColor);
+                } else {
+                    pixelWriter.setColor(x, y, currentColor);
+                }
             }
         }
+
         mImageView.setImage(monoImage);
         updateImageAndProperties();
     }
+
+
 
     // **************************************** //
     // **           HELPER METHODS           ** //
@@ -531,20 +582,34 @@ public class Controller implements Initializable{
     }
 
     private void updateColorAdjustEffectForSelection() {
-        if (mRectangle != null) {
-            mColorAdjust.setBrightness(sldBrightness.getValue() / 100.0);
-            mColorAdjust.setContrast(sldContrast.getValue() / 100.0);
-            mColorAdjust.setHue(sldHue.getValue() / 100.0);
-            mColorAdjust.setSaturation(sldSaturate.getValue() / 100.0);
+
+        if (mSelectionView == null) {
+            mSelectionView = new ImageView();
             Image selectionImage = getSnapshotForSelection();
-            ImageView selection = new ImageView();
-            selection.setX(mRectangle.getX());
-            selection.setY(mRectangle.getY());
-            selection.setImage(selectionImage);
-            selection.setEffect(mColorAdjust);
-            mAnchorPane.getChildren().add(selection);
-            mRectangle.setVisible(true);
+            mSelectionView.setImage(selectionImage);
+            mSelectionView.setX(mRectangle.getX());
+            mSelectionView.setY(mRectangle.getY());
+            mAnchorPane.getChildren().add(mSelectionView);
         }
+
+        mColorAdjust.setBrightness(sldBrightness.getValue() / 100.0);
+        mColorAdjust.setContrast(sldContrast.getValue() / 100.0);
+        mColorAdjust.setHue(sldHue.getValue() / 100.0);
+        mColorAdjust.setSaturation(sldSaturate.getValue() / 100.0);
+
+        mSelectionView.setEffect(mColorAdjust);
+
+    }
+
+    private void applyImageEffects() {
+        if (mSelectionView != null) {
+            Image currentImage = getSnapshot();
+            mAnchorPane.getChildren().remove(mSelectionView);
+            mSelectionView = null;
+            mImageView.setImage(currentImage);
+            removeSelection();
+        }
+        updateImageAndProperties();
     }
 
     // check if double is zero -> used for sliders
@@ -556,8 +621,7 @@ public class Controller implements Initializable{
     // get a "snap" of screen's current image
     private Image getSnapshot() {
         SnapshotParameters snapshotParameters = new SnapshotParameters();
-        //snapshotParameters.setViewport(new Rectangle2D(0, 0, mImageView.getFitWidth(), mImageView.getFitHeight()));
-        return mImageView.snapshot(snapshotParameters, null);
+        return mAnchorPane.snapshot(snapshotParameters, null);
     }
 
     // get snapshot from rectangle selection
@@ -577,13 +641,16 @@ public class Controller implements Initializable{
     }
 
     private void updateImageAndProperties() {
+        removeSelection();
         CommandCenter.getInstance().storeLastImageAsUndo();
         enableUndo();
         Image currentImage = getSnapshot();
-        resetEffectsSliders();
         CommandCenter.getInstance().setImageAndView(currentImage);
+        resetEffectsSliders();
+        mImageView.setImage(currentImage);
         mAnchorPane.getChildren().removeAll(removeShapes);
         removeShapes.clear();
+
     }
 
     // change the mouse icon to cross hairs
@@ -825,8 +892,11 @@ public class Controller implements Initializable{
             Image newImage = SwingFXUtils.toFXImage(bufferedImage, null);
 
             // update the application to display the image
-            CommandCenter.getInstance().setImageAndView(newImage);
-            CommandCenter.getInstance().setOriginalImage(newImage);
+            mImageView.setImage(newImage);
+            Image currentImage = getSnapshot();
+
+            CommandCenter.getInstance().setImageAndView(currentImage);
+            CommandCenter.getInstance().setOriginalImage(currentImage);
             enableStartOver();
 
             // no undo or redo -> new file
@@ -935,8 +1005,8 @@ public class Controller implements Initializable{
             Image currentImage = getSnapshot();
             CommandCenter.getInstance().addRedoImage(currentImage);
             Image undoImage = CommandCenter.getInstance().getUndoImage();
-            resetEffectsSliders();
             CommandCenter.getInstance().setImageAndView(undoImage);
+            mImageView.setImage(undoImage);
             enableRedo();
             if (!CommandCenter.getInstance().hasUndoImage()) {
                 disableUndo();
@@ -952,6 +1022,7 @@ public class Controller implements Initializable{
             Image redoImage = CommandCenter.getInstance().getRedoImage();
             resetEffectsSliders();
             CommandCenter.getInstance().setImageAndView(redoImage);
+            mImageView.setImage(redoImage);
             enableUndo();
             if (!CommandCenter.getInstance().hasRedoImage()) {
                 disableRedo();
