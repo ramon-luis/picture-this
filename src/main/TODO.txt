@@ -1,14 +1,14 @@
 TODO
-1. paint bucket - DONE
 
-2. apply effects to selection - NEED!!!
+logic for selection and drawing - when to enable/remove/disable
 
-3. effects & undo: sliders or change to buttons - DONE
-
-5. redo images in wrong order - DONE
-
-5. image pattern
-
-5. mono - two tone or pick?
-
-6. toggle on already selected does not change
+1. selected - repeat for image effects
+        - trouble shoot issue
+2. reformat toolbar
+        - vertical - DONE
+        - images on buttons - DONE
+        - tool tips
+3. add extra effects:
+        - blur, bloom, glow
+        - rotate
+        - image pattern

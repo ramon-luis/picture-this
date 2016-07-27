@@ -4,6 +4,29 @@
     -fx-base: rgb(32, 32, 32);
 }
 
+*.toggle-button {
+    -fx-base: rgb(255, 255, 255);
+    -fx-background-size: 25px;
+    -fx-background-repeat: no-repeat;
+    -fx-background-position: 80%;
+}
+
+*.button {
+    -fx-base: rgb(255, 255, 255);
+    -fx-background-size: 25px;
+    -fx-background-repeat: no-repeat;
+    -fx-background-position: 80%;
+}
+
+
+
+*.color-picker {
+    -fx-base: rgb(255, 255, 255);
+    -fx-background-size: 25px;
+    -fx-background-repeat: no-repeat;
+    -fx-background-position: 90%;
+}
+
 *.toggle-button:hover {
     -fx-effect: dropshadow(gaussian, rgb(255,255,255), 10, 0, 0, 1);
 }
@@ -36,6 +59,62 @@
 
 /* Component specific styles */
 
-*.mImageView {
-    -fx-background-color: rgb(255, 255, 255);
+
+#tgbBucket {
+    -fx-background-image: url('/images/bucket.png');
 }
+
+#tgbPen {
+    -fx-background-image: url('/images/pen.png');
+}
+
+#tgbPickColor {
+    -fx-background-image: url('/images/dropper.png');
+}
+
+#tgbSelectArea {
+    -fx-background-image: url('/images/select.png');
+
+}#btnUndo {
+    -fx-background-image: url('/images/undo.png');
+
+}#btnRedo {
+    -fx-background-image: url('/images/redo.png');
+}
+
+}#btnStartOver {
+    -fx-background-image: url('/images/start_over.png');
+}
+
+}#btnGreyscale {
+     -fx-background-image: url('/images/grayscale.JPG');
+     -fx-background-size: 45px;
+     -fx-background-position: 50%;
+}
+
+}#btnSepia {
+    -fx-background-image: url('/images/sepia.JPG');
+     -fx-background-size: 30px;
+     -fx-background-position: 50%;
+}
+
+#btnInvert {
+    -fx-background-image: url('/images/invert.JPG');
+    -fx-background-size: 45px;
+    -fx-background-position: 50%;
+}
+
+#btnMonochrome {
+    -fx-background-image: url('/images/mono.JPG');
+    -fx-background-size: 45px;
+    -fx-background-position: 50%;
+}
+
+#tgbEffects {
+    -fx-background-image: url('/images/levels.JPG');
+    -fx-background-size: 30px;
+    -fx-background-position: 50%;
+}
+
+
+

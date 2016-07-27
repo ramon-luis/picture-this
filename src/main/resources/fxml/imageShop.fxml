@@ -2,14 +2,11 @@
 
 <?import javafx.scene.*?>
 <?import javafx.scene.image.*?>
-<?import java.lang.*?>
-<?import java.util.*?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
-<?import javafx.scene.paint.*?>
 <?import javafx.scene.text.*?>
 
-<VBox prefHeight="900.0" prefWidth="1350.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="imageShop.Controller">
+<VBox prefHeight="900.0" prefWidth="1500.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="imageShop.Controller">
     <children>
         <MenuBar VBox.vgrow="NEVER">
             <menus>
@@ -51,160 +48,144 @@
                 </Menu>
             </menus>
         </MenuBar>
-      <VBox prefHeight="305.0" prefWidth="1350.0">
-         <children>
-            <ToolBar fx:id="tbMain" prefHeight="26.0" prefWidth="1400.0">
-              <items>
-                  <ToggleButton fx:id="tgbDraw" layoutX="10.0" layoutY="10.0" mnemonicParsing="false" selected="false" text="Draw" />
-                  <ToggleButton fx:id="tgbEffects" layoutX="116.0" layoutY="10.0" mnemonicParsing="false" selected="false" text="Effects" />
-                  <ToggleButton fx:id="tgbFilters" layoutX="222.0" layoutY="10.0" mnemonicParsing="false" selected="false" text="Filters" />
-                  <Separator prefHeight="27.0" prefWidth="21.0" />
-                  <Button fx:id="btnUndo" disable="true" mnemonicParsing="false" text="Undo" />
-                  <Button fx:id="btnRedo" disable="true" layoutX="164.0" layoutY="10.0" mnemonicParsing="false" text="Redo" />
-                  <Separator layoutX="190.0" layoutY="10.0" prefHeight="27.0" prefWidth="21.0" />
-                  <Button fx:id="btnStartOver" disable="true" layoutX="394.0" layoutY="10.0" mnemonicParsing="false" text="Start Over" />
-                  <Separator layoutX="324.0" layoutY="10.0" prefHeight="27.0" prefWidth="21.0" />
-                      <ToggleButton fx:id="tgbSelectArea" mnemonicParsing="false" text="Select Area" />
-              </items>
-            </ToolBar>
-            <Pane fx:id="pnTools" prefHeight="90.0" prefWidth="1350.0">
-               <children>
-                  <Group fx:id="grpDraw" layoutY="3.0" visible="false">
-                     <children>
-                        <Group fx:id="grpPenDetails" layoutX="-1.0" layoutY="5.0">
-                           <children>
-                              <Group fx:id="grpPenShape" layoutX="-123.0">
-                                 <children>
-                                    <Separator fx:id="spColor2" layoutX="458.0" layoutY="11.0" orientation="VERTICAL" prefHeight="49.0" prefWidth="7.0" />
-                                    <Text fill="WHITE" layoutX="497.0" layoutY="12.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Pen Shape" textAlignment="CENTER" wrappingWidth="75.0">
-                                       <font>
-                                          <Font name="System Bold" size="13.0" />
-                                       </font>
-                                    </Text>
-                                        <ToggleButton fx:id="tgbCircle" layoutX="472.0" layoutY="22.0" mnemonicParsing="false" text="Circle" />
-                                        <ToggleButton fx:id="tgbSquare" layoutX="534.0" layoutY="22.0" mnemonicParsing="false" text="Square" />
-                                 </children>
-                              </Group>
-                              <Group fx:id="grpPenSize" layoutX="523.0" layoutY="-6.0">
-                                 <children>
-                                    <Separator fx:id="spColor3" layoutX="-40.0" layoutY="16.0" orientation="VERTICAL" prefHeight="49.0" prefWidth="7.0" />
-                                    <Text fill="WHITE" layoutX="3.0" layoutY="18.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Pen Size" textAlignment="CENTER" wrappingWidth="75.0">
-                                       <font>
-                                          <Font name="System Bold" size="13.0" />
-                                       </font>
-                                    </Text>
-                                    <Button fx:id="btnResetPenSize" layoutX="11.0" layoutY="46.0" mnemonicParsing="false" prefHeight="26.0" prefWidth="59.0" text="Reset" />
-                                    <Slider fx:id="sldPenSize" layoutX="-29.0" layoutY="24.0" min="1.0" value="20.0" />
-                                 </children>
-                              </Group>
-                              <Group fx:id="grpPenPressure" layoutX="679.0" layoutY="-6.0">
-                                 <children>
-                                    <Separator fx:id="spColor4" layoutX="-38.0" layoutY="16.0" orientation="VERTICAL" prefHeight="49.0" prefWidth="7.0" />
-                                    <Text fill="WHITE" layoutX="-3.0" layoutY="18.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Pen Pressure" textAlignment="CENTER" wrappingWidth="87.0">
-                                       <font>
-                                          <Font name="System Bold" size="13.0" />
-                                       </font>
-                                    </Text>
-                                    <Button fx:id="btnResetPenPressure" layoutX="11.0" layoutY="46.0" mnemonicParsing="false" prefHeight="26.0" prefWidth="59.0" text="Reset" />
-                                    <Slider fx:id="sldPenPressure" layoutX="-29.0" layoutY="24.0" value="75.0" />
-                                 </children>
-                              </Group>
-                           </children>
-                        </Group>
-                        <Group fx:id="grpColor" layoutX="-31.0">
-                           <children>
-                                  <ColorPicker fx:id="cpkColor" layoutX="37.0" layoutY="4.0" />
-                              <ToggleButton fx:id="tgbPickColor" layoutX="37.0" layoutY="37.0" mnemonicParsing="false" prefHeight="27.0" prefWidth="89.0" text="Pick Color" />
-                           </children>
-                        </Group>
-                        <Group fx:id="grpDrawTool" layoutX="-272.0" layoutY="5.0">
-                           <children>
-                              <Separator fx:id="spColor1" layoutX="455.0" layoutY="10.0" orientation="VERTICAL" prefHeight="49.0" prefWidth="7.0" />
-                              <Text fill="WHITE" layoutX="488.0" layoutY="12.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Drawing Tool" textAlignment="CENTER" wrappingWidth="88.0">
-                                 <font>
-                                    <Font name="System Bold" size="13.0" />
-                                 </font>
-                              </Text>
-                              <ToggleButton fx:id="tgbBucket" layoutX="467.0" layoutY="22.0" mnemonicParsing="false" text="Bucket" />
-                              <ToggleButton fx:id="tgbPen" layoutX="539.0" layoutY="22.0" mnemonicParsing="false" prefHeight="27.0" prefWidth="56.0" text="Pen" />
-                           </children>
-                        </Group>
-                     </children>
-                  </Group>
-                  <Group fx:id="grpEffects" layoutX="7.0" layoutY="4.0">
-                     <children>
-                        <Group>
-                           <children>
-                              <Button fx:id="btnApplyEffects" mnemonicParsing="false" prefHeight="27.0" prefWidth="88.0" text="Apply" />
-                              <Button fx:id="btnResetEffects" layoutY="36.0" mnemonicParsing="false" prefHeight="27.0" prefWidth="88.0" text="Cancel" />
-                           </children>
-                        </Group>
-                        <Group fx:id="grpContrast" layoutX="277.0" layoutY="-8.0">
-                           <children>
-                              <Text fill="WHITE" layoutX="3.0" layoutY="19.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Contrast" textAlignment="CENTER" wrappingWidth="75.0">
-                                 <font>
-                                    <Font name="System Bold" size="13.0" />
-                                 </font>
-                              </Text>
-                              <Button fx:id="btnResetContrast" layoutX="11.0" layoutY="46.0" mnemonicParsing="false" prefHeight="26.0" prefWidth="59.0" text="Reset" />
-                              <Slider fx:id="sldContrast" layoutX="-29.0" layoutY="24.0" min="-100.0" />
-                           </children>
-                        </Group>
-                        <Group fx:id="grpHue" layoutX="416.0" layoutY="-8.0">
-                           <children>
-                              <Text fill="WHITE" layoutX="3.0" layoutY="19.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Hue" textAlignment="CENTER" wrappingWidth="75.0">
-                                 <font>
-                                    <Font name="System Bold" size="13.0" />
-                                 </font>
-                              </Text>
-                              <Button fx:id="btnResetHue" layoutX="11.0" layoutY="46.0" mnemonicParsing="false" prefHeight="26.0" prefWidth="59.0" text="Reset" />
-                              <Slider fx:id="sldHue" layoutX="-29.0" layoutY="24.0" min="-100.0" />
-                           </children>
-                        </Group>
-                        <Group fx:id="grpSaturate" layoutX="560.0" layoutY="-8.0">
-                           <children>
-                              <Text fill="WHITE" layoutX="3.0" layoutY="19.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Saturate" textAlignment="CENTER" wrappingWidth="75.0">
-                                 <font>
-                                    <Font name="System Bold" size="13.0" />
-                                 </font>
-                              </Text>
-                              <Button fx:id="btnResetSaturate" layoutX="11.0" layoutY="46.0" mnemonicParsing="false" prefHeight="26.0" prefWidth="59.0" text="Reset" />
-                              <Slider fx:id="sldSaturate" layoutX="-29.0" layoutY="24.0" min="-100.0" />
-                           </children>
-                        </Group>
-                        <Group fx:id="grpBrightness" layoutX="137.0" layoutY="-8.0">
-                           <children>
-                              <Text fill="WHITE" layoutX="3.0" layoutY="19.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Brightness" textAlignment="CENTER" wrappingWidth="75.0">
-                                 <font>
-                                    <Font name="System Bold" size="13.0" />
-                                 </font>
-                              </Text>
-                              <Button fx:id="btnResetBrightness" layoutX="11.0" layoutY="46.0" mnemonicParsing="false" prefHeight="26.0" prefWidth="59.0" text="Reset" />
-                              <Slider fx:id="sldBrightness" layoutX="-29.0" layoutY="24.0" min="-100.0" />
-                           </children>
-                        </Group>
-                     </children>
-                  </Group>
-                  <Group fx:id="grpFilters">
-                     <children>
-                      <Button fx:id="btnGreyscale" layoutX="14.0" layoutY="9.0" mnemonicParsing="false" prefHeight="49.0" prefWidth="105.0" text="Grayscale" />
-                        <Button fx:id="btnSepia" layoutX="127.0" layoutY="9.0" mnemonicParsing="false" prefHeight="49.0" prefWidth="105.0" text="Sepia" />
-                        <Button fx:id="btnInvert" layoutX="240.0" layoutY="9.0" mnemonicParsing="false" prefHeight="49.0" prefWidth="105.0" text="Invert" />
-                        <Button fx:id="btnMonochrome" layoutX="351.0" layoutY="9.0" mnemonicParsing="false" prefHeight="49.0" prefWidth="105.0" text="Monochrome" />
-                     </children>
-                  </Group>
-               </children>
-            </Pane>
-         </children>
-      </VBox>
-        <ScrollPane prefHeight="770.0" prefWidth="1350.0">
-            <content>
-                <AnchorPane fx:id="mAnchorPane" minHeight="0.0" minWidth="0.0" prefHeight="770.0" prefWidth="1350.0">
+
+        <ToolBar>
+            <items>
+
+                <Group fx:id="grpPenDetails">
                     <children>
-                        <ImageView fx:id="mImageView" fitHeight="770.0" fitWidth="1350.0" pickOnBounds="true" preserveRatio="true" />
+                        <Group fx:id="grpPenShape">
+                            <children>
+                                <Text fill="WHITE" strokeType="OUTSIDE" strokeWidth="0.0" text="Pen Shape" textAlignment="LEFT">
+                                    <font>
+                                        <Font name="System Bold" size="13.0" />
+                                    </font>
+                                </Text>
+                                <ToggleButton fx:id="tgbCircle" mnemonicParsing="false" text="Circle" />
+                                <ToggleButton fx:id="tgbSquare" mnemonicParsing="false" text="Square" />
+                            </children>
+                            </Group>
+                        <Group fx:id="grpPenSize" layoutX="523.0" layoutY="-6.0">
+                            <children>
+                                <Separator fx:id="spPenSize" orientation="VERTICAL"/>
+                                <Text fill="WHITE" strokeType="OUTSIDE" strokeWidth="0.0" text="Pen Size" textAlignment="CENTER">
+                                    <font>
+                                        <Font name="System Bold" size="13.0" />
+                                    </font>
+                                </Text>
+                                <Slider fx:id="sldPenSize" min="1.0" max="100.0" value="20.0" />
+                                <Button fx:id="btnResetPenSize" mnemonicParsing="false" text="Reset" />
+                            </children>
+                        </Group>
+                        <Group fx:id="grpPenPressure">
+                            <children>
+                                <Separator fx:id="spPenPressure" orientation="VERTICAL"/>
+                                <Text fill="WHITE" strokeType="OUTSIDE" strokeWidth="0.0" text="Pen Pressure" textAlignment="CENTER">
+                                    <font>
+                                        <Font name="System Bold" size="13.0"/>
+                                    </font>
+                                </Text>
+                                <Slider fx:id="sldPenPressure" min="1.0" max="100.0" value="75.0" />
+                                <Button fx:id="btnResetPenPressure" mnemonicParsing="false" text="Reset" />
+                            </children>
+                        </Group>
                     </children>
-                </AnchorPane>
-            </content>
-        </ScrollPane>
+                </Group>
+
+                <Group fx:id="grpEffects">
+                    <children>
+                        <Group>
+                            <children>
+                                <Button fx:id="btnApplyEffects" mnemonicParsing="false" text="Apply"/>
+                                <Button fx:id="btnResetEffects" text="Cancel"/>
+                            </children>
+                        </Group>
+                        <Group fx:id="grpContrast">
+                            <children>
+                                <Text fill="WHITE" strokeType="OUTSIDE" strokeWidth="0.0" text="Contrast" textAlignment="CENTER">
+                                    <font>
+                                        <Font name="System Bold" size="13.0"/>
+                                    </font>
+                                </Text>
+                                <Button fx:id="btnResetContrast" mnemonicParsing="false" text="Reset" />
+                                <Slider fx:id="sldContrast" min="-100.0" max="100" value="0.0"/>
+                            </children>
+                        </Group>
+                        <Group fx:id="grpHue">
+                            <children>
+                                <Text fill="WHITE" strokeType="OUTSIDE" strokeWidth="0.0" text="Hue" textAlignment="CENTER">
+                                    <font>
+                                        <Font name="System Bold" size="13.0" />
+                                    </font>
+                                </Text>
+                                <Button fx:id="btnResetHue" mnemonicParsing="false" text="Reset" />
+                                <Slider fx:id="sldHue" min="-100.0" max="100" value="0.0"/>
+                            </children>
+                        </Group>
+                        <Group fx:id="grpSaturate">
+                            <children>
+                                <Text fill="WHITE" strokeType="OUTSIDE" strokeWidth="0.0" text="Saturate" textAlignment="CENTER">
+                                    <font>
+                                        <Font name="System Bold" size="13.0" />
+                                    </font>
+                                </Text>
+                                <Button fx:id="btnResetSaturate" mnemonicParsing="false" text="Reset" />
+                                <Slider fx:id="sldSaturate" min="-100.0" max="100" value="0.0"/>
+                            </children>
+                        </Group>
+                        <Group fx:id="grpBrightness">
+                            <children>
+                                <Text fill="WHITE" strokeType="OUTSIDE" strokeWidth="0.0" text="Brightness" textAlignment="CENTER" >
+                                    <font>
+                                        <Font name="System Bold" size="13.0" />
+                                    </font>
+                                </Text>
+                                <Button fx:id="btnResetBrightness" mnemonicParsing="false" text="Reset" />
+                                <Slider fx:id="sldBrightness" min="-100.0" max="100" value="0.0"/>
+                            </children>
+                        </Group>
+                    </children>
+                </Group>
+
+            </items>
+        </ToolBar>
+
+        <HBox>
+            <children>
+                <ToolBar fx:id="tbMain" orientation="VERTICAL" >
+                    <items>
+                        <ColorPicker fx:id="cpkColor" styleClass="button" prefWidth="30" prefHeight="30"/>
+                        <ToggleButton fx:id="tgbPickColor" prefWidth="30" prefHeight="30" mnemonicParsing="false"/>
+                        <ToggleButton fx:id="tgbBucket" prefWidth="30" prefHeight="30" mnemonicParsing="false" />
+                        <ToggleButton fx:id="tgbPen" prefWidth="30" prefHeight="30" mnemonicParsing="false" />
+                        <Separator prefWidth="30" prefHeight="5"/>
+                        <Button fx:id="btnUndo" disable="true" prefWidth="30" prefHeight="30" mnemonicParsing="false"/>
+                        <Button fx:id="btnRedo" disable="true" prefWidth="30" prefHeight="30" mnemonicParsing="false"/>
+                        <Button fx:id="btnStartOver" disable="true" prefWidth="30" prefHeight="30" mnemonicParsing="false"/>
+                        <Separator prefWidth="30" prefHeight="5"/>
+                        <ToggleButton fx:id="tgbSelectArea" prefWidth="30" prefHeight="30" mnemonicParsing="false"/>
+                        <Separator prefWidth="30" prefHeight="5"/>
+                        <ToggleButton fx:id="tgbEffects" prefWidth="30" prefHeight="30" mnemonicParsing="false" />
+                        <Button fx:id="btnGreyscale" prefHeight="30" prefWidth="30" mnemonicParsing="false"/>
+                        <Button fx:id="btnSepia" prefHeight="30" prefWidth="30" mnemonicParsing="false"/>
+                        <Button fx:id="btnInvert" prefHeight="30" prefWidth="30" mnemonicParsing="false"/>
+                        <Button fx:id="btnMonochrome" prefHeight="30" prefWidth="30" mnemonicParsing="false"/>
+
+                        <ToggleButton fx:id="tgbDraw"/>
+                        <ToggleButton fx:id="tgbFilters"/>
+
+                    </items>
+                </ToolBar>
+                <ScrollPane prefHeight="700.0" prefWidth="1300.0">
+                    <content>
+                        <AnchorPane fx:id="mAnchorPane" minHeight="0.0" minWidth="0.0" prefHeight="700.0" prefWidth="1300.0">
+                            <children>
+                                <ImageView fx:id="mImageView" fitHeight="700.0" fitWidth="1300.0" pickOnBounds="true" preserveRatio="true" />
+                            </children>
+                        </AnchorPane>
+                    </content>
+                </ScrollPane>
+            </children>
+        </HBox>
     </children>
 </VBox>
