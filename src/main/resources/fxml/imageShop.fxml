@@ -8,6 +8,7 @@
 
 <VBox prefHeight="900.0" prefWidth="1500.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="imageShop.Controller">
     <children>
+
         <MenuBar VBox.vgrow="NEVER">
             <menus>
                 <Menu mnemonicParsing="false" text="File">
@@ -49,82 +50,74 @@
             </menus>
         </MenuBar>
 
+        <ToolBar fx:id="tbPenDetails" orientation="HORIZONTAL">
+            <items>
+                <Text fill="WHITE" strokeType="OUTSIDE" strokeWidth="0.0" text="Pen Shape" textAlignment="LEFT">
+                    <font>
+                        <Font name="System Bold" size="13.0" />
+                    </font>
+                </Text>
+                <ToggleButton fx:id="tgbCircle" mnemonicParsing="false" text="Circle" />
+                <ToggleButton fx:id="tgbSquare" mnemonicParsing="false" text="Square" />
+                <Separator orientation="VERTICAL" prefWidth="20"/>
+                <Text fill="WHITE" strokeType="OUTSIDE" strokeWidth="0.0" text="Pen Size" textAlignment="CENTER">
+                    <font>
+                        <Font name="System Bold" size="13.0" />
+                    </font>
+                </Text>
+                <Slider fx:id="sldPenSize" min="1.0" max="100.0" value="20.0" />
+                <Button fx:id="btnResetPenSize" mnemonicParsing="false" text="Reset" />
+                <Separator orientation="VERTICAL" prefWidth="20"/>
+                <Text fill="WHITE" strokeType="OUTSIDE" strokeWidth="0.0" text="Pen Pressure" textAlignment="CENTER">
+                    <font>
+                        <Font name="System Bold" size="13.0"/>
+                    </font>
+                </Text>
+                <Slider fx:id="sldPenPressure" min="1.0" max="100.0" value="75.0" />
+                <Button fx:id="btnResetPenPressure" mnemonicParsing="false" text="Reset" />
 
+            </items>
+        </ToolBar>
 
-                <ToolBar fx:id="tbPenDetails" orientation="HORIZONTAL">
-                    <items>
-                                <Text fill="WHITE" strokeType="OUTSIDE" strokeWidth="0.0" text="Pen Shape" textAlignment="LEFT">
-                                    <font>
-                                        <Font name="System Bold" size="13.0" />
-                                    </font>
-                                </Text>
-                                <ToggleButton fx:id="tgbCircle" mnemonicParsing="false" text="Circle" />
-                                <ToggleButton fx:id="tgbSquare" mnemonicParsing="false" text="Square" />
+        <ToolBar fx:id="tbEffects">
+            <items>
+                <Button fx:id="btnApplyEffects" mnemonicParsing="false" text="Apply"/>
+                <Button fx:id="btnResetEffects" text="Cancel"/>
+                <Separator orientation="VERTICAL" prefWidth="20" />
+                <Text fill="WHITE" strokeType="OUTSIDE" strokeWidth="0.0" text="Brightness" textAlignment="CENTER" >
+                    <font>
+                        <Font name="System Bold" size="13.0" />
+                    </font>
+                </Text>
+                <Slider fx:id="sldBrightness" min="-100.0" max="100" value="0.0"/>
+                <Button fx:id="btnResetBrightness" mnemonicParsing="false" text="Reset" />
 
-
-                                <Separator fx:id="spPenSize" orientation="VERTICAL"/>
-                                <Text fill="WHITE" strokeType="OUTSIDE" strokeWidth="0.0" text="Pen Size" textAlignment="CENTER">
-                                    <font>
-                                        <Font name="System Bold" size="13.0" />
-                                    </font>
-                                </Text>
-                                <Slider fx:id="sldPenSize" min="1.0" max="100.0" value="20.0" />
-                                <Button fx:id="btnResetPenSize" mnemonicParsing="false" text="Reset" />
-
-
-                                <Separator fx:id="spPenPressure" orientation="VERTICAL"/>
-                                <Text fill="WHITE" strokeType="OUTSIDE" strokeWidth="0.0" text="Pen Pressure" textAlignment="CENTER">
-                                    <font>
-                                        <Font name="System Bold" size="13.0"/>
-                                    </font>
-                                </Text>
-                                <Slider fx:id="sldPenPressure" min="1.0" max="100.0" value="75.0" />
-                                <Button fx:id="btnResetPenPressure" mnemonicParsing="false" text="Reset" />
-
-                    </items>
-                </ToolBar>
-                <ToolBar fx:id="tbEffects">
-                    <items>
-                                <Button fx:id="btnApplyEffects" mnemonicParsing="false" text="Apply"/>
-                                <Button fx:id="btnResetEffects" text="Cancel"/>
-
-
-                                <Text fill="WHITE" strokeType="OUTSIDE" strokeWidth="0.0" text="Contrast" textAlignment="CENTER">
-                                    <font>
-                                        <Font name="System Bold" size="13.0"/>
-                                    </font>
-                                </Text>
-                                <Button fx:id="btnResetContrast" mnemonicParsing="false" text="Reset" />
-                                <Slider fx:id="sldContrast" min="-100.0" max="100" value="0.0"/>
-
-                                <Text fill="WHITE" strokeType="OUTSIDE" strokeWidth="0.0" text="Hue" textAlignment="CENTER">
-                                    <font>
-                                        <Font name="System Bold" size="13.0" />
-                                    </font>
-                                </Text>
-                                <Button fx:id="btnResetHue" mnemonicParsing="false" text="Reset" />
-                                <Slider fx:id="sldHue" min="-100.0" max="100" value="0.0"/>
-
-                                <Text fill="WHITE" strokeType="OUTSIDE" strokeWidth="0.0" text="Saturate" textAlignment="CENTER">
-                                    <font>
-                                        <Font name="System Bold" size="13.0" />
-                                    </font>
-                                </Text>
-                                <Button fx:id="btnResetSaturate" mnemonicParsing="false" text="Reset" />
-                                <Slider fx:id="sldSaturate" min="-100.0" max="100" value="0.0"/>
-
-                                <Text fill="WHITE" strokeType="OUTSIDE" strokeWidth="0.0" text="Brightness" textAlignment="CENTER" >
-                                    <font>
-                                        <Font name="System Bold" size="13.0" />
-                                    </font>
-                                </Text>
-                                <Button fx:id="btnResetBrightness" mnemonicParsing="false" text="Reset" />
-                                <Slider fx:id="sldBrightness" min="-100.0" max="100" value="0.0"/>
-
-                    </items>
-                </ToolBar>
-
-
+                <Separator orientation="VERTICAL" prefWidth="20" />
+                <Text fill="WHITE" strokeType="OUTSIDE" strokeWidth="0.0" text="Contrast" textAlignment="CENTER">
+                    <font>
+                        <Font name="System Bold" size="13.0"/>
+                    </font>
+                </Text>
+                <Slider fx:id="sldContrast" min="-100.0" max="100" value="0.0"/>
+                <Button fx:id="btnResetContrast" mnemonicParsing="false" text="Reset" />
+                <Separator orientation="VERTICAL" prefWidth="20" />
+                <Text fill="WHITE" strokeType="OUTSIDE" strokeWidth="0.0" text="Hue" textAlignment="CENTER">
+                    <font>
+                        <Font name="System Bold" size="13.0" />
+                    </font>
+                </Text>
+                <Slider fx:id="sldHue" min="-100.0" max="100" value="0.0"/>
+                <Button fx:id="btnResetHue" mnemonicParsing="false" text="Reset" />
+                <Separator orientation="VERTICAL" prefWidth="20" />
+                <Text fill="WHITE" strokeType="OUTSIDE" strokeWidth="0.0" text="Saturate" textAlignment="CENTER">
+                    <font>
+                        <Font name="System Bold" size="13.0" />
+                    </font>
+                </Text>
+                <Slider fx:id="sldSaturate" min="-100.0" max="100" value="0.0"/>
+                <Button fx:id="btnResetSaturate" mnemonicParsing="false" text="Reset" />
+            </items>
+        </ToolBar>
 
         <HBox>
             <children>
@@ -159,5 +152,6 @@
                 </ScrollPane>
             </children>
         </HBox>
+
     </children>
 </VBox>

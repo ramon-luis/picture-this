@@ -1,14 +1,14 @@
 TODO
+outer border???
+too many redos
+draw tools not activating on first click when select is active
+reset toolbar on open
 
-logic for selection and drawing - when to enable/remove/disable
+images for pen shape
+tool tips
+blur
 
-1. selected - repeat for image effects
-        - trouble shoot issue
-2. reformat toolbar
-        - vertical - DONE
-        - images on buttons - DONE
-        - tool tips
-3. add extra effects:
+extra effects:
         - blur, bloom, glow
         - rotate
         - image pattern

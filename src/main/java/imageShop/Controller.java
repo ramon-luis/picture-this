@@ -110,7 +110,9 @@ public class Controller implements Initializable{
     @FXML private Button btnInvert;
     @FXML private Button btnMonochrome;
 
-    @FXML private ToggleGroup tgDrawTool = new ToggleGroup();
+    @FXML private ToggleGroup tgTools = new ToggleGroup();
+    @FXML private ToggleGroup tgSelectEdit = new ToggleGroup();
+
     @FXML private ToggleGroup tgPenShape = new ToggleGroup();
 
     @FXML private AnchorPane mAnchorPane;
@@ -197,8 +199,9 @@ public class Controller implements Initializable{
         CommandCenter.getInstance().setImageAndView(initialImage);
 
         // assign toggle groups
-        tgbBucket.setToggleGroup(tgDrawTool);
-        tgbPen.setToggleGroup(tgDrawTool);
+        tgbPickColor.setToggleGroup(tgTools);
+        tgbBucket.setToggleGroup(tgTools);
+        tgbPen.setToggleGroup(tgTools);
         tgbCircle.setToggleGroup(tgPenShape);
         tgbSquare.setToggleGroup(tgPenShape);
 
@@ -207,6 +210,7 @@ public class Controller implements Initializable{
 
         // hide open recent, hide tools, disable undo/edo
         hideRecentFileMenu();
+        hidePenAndEffectsMenu();
         disableRedo();
         disableUndo();
         enableStartOver();
@@ -224,11 +228,12 @@ public class Controller implements Initializable{
                     setMouseToCross(mouseEvent);
                 } else if (tgbEffects.isSelected()) {
                     setMouseToPointer(mouseEvent);
-                } else if (mUserIsPickingColor) {
+                } else if (tgbPickColor.isSelected()) {
                     setMouseToDropper(mouseEvent);
-                } else if (mDrawTool == DrawTool.BUCKET) {
+                } else if (tgbBucket.isSelected()) {
+                    System.out.println("bucket icon");
                     setMouseToBucket(mouseEvent);
-                } else if (mDrawTool == DrawTool.PEN && mPenShape != null) {
+                } else if (tgbPen.isSelected() && mPenShape != null) {
                     setMouseToPenShape(mouseEvent);
                 }
             }
@@ -241,16 +246,17 @@ public class Controller implements Initializable{
             if (tgbSelectArea.isSelected()) {
                 if (mRectangle != null) {
                     removeSelection();
+                    resetEffectsSliders();
                 } else if (tgbSelectArea.isSelected()) {
                     startSelection(mouseEvent);
                 }
             } else if (tgbEffects.isSelected()) {
                 // do nothing
-            } else if (mUserIsPickingColor) {
+            } else if (tgbPickColor.isSelected()) {
                 pickColorFromDropper(mouseEvent);
-            } else if (mDrawTool == DrawTool.BUCKET) {
+            } else if (tgbBucket.isSelected()) {
                 fillFromBucket(mouseEvent);
-            } else if (mDrawTool == DrawTool.PEN && mPenShape != null) {
+            } else if (tgbPen.isSelected() && mPenShape != null) {
                 drawPen(mouseEvent);
             }
             mouseEvent.consume();
@@ -263,11 +269,11 @@ public class Controller implements Initializable{
                updateRectangle(mouseEvent);
             } else if (tgbEffects.isSelected()) {
                 // do nothing
-            } else if (mUserIsPickingColor) {
+            } else if (tgbPickColor.isSelected()) {
                 // do nothing
-            } else if (mDrawTool == DrawTool.BUCKET) {
+            } else if (tgbBucket.isSelected()) {
                 fillFromBucket(mouseEvent);
-            } else if (mDrawTool == DrawTool.PEN && mPenShape != null) {
+            } else if (tgbPen.isSelected() && mPenShape != null) {
                 drawPen(mouseEvent);
             }
             mouseEvent.consume();
@@ -280,11 +286,11 @@ public class Controller implements Initializable{
                 updateRectangle(mouseEvent);
             } else if (tgbEffects.isSelected()) {
                 // do nothing
-            } else if (mUserIsPickingColor) {
+            } else if (tgbPickColor.isSelected()) {
                 // do nothing
-            } else if (mDrawTool == DrawTool.BUCKET) {
+            } else if (tgbBucket.isSelected()) {
                 updateImageAndProperties();
-            } else if (mDrawTool == DrawTool.PEN && mPenShape != null) {
+            } else if (tgbPen.isSelected() && mPenShape != null) {
                 updateImageAndProperties();
             }
             mouseEvent.consume();
@@ -295,20 +301,39 @@ public class Controller implements Initializable{
         // **************************************** //
 
         // DrawTool toggle group
-        tgDrawTool.selectedToggleProperty().addListener((observable, oldValue, newValue) -> {
+        tgTools.selectedToggleProperty().addListener((observable, oldValue, newValue) -> {
+            System.out.println("tool selected");
             removeSelection();
             if (newValue == tgbBucket) {
+                System.out.println("buclet selected");
+                System.out.println("bucket tgb is selected: " + tgbBucket.isSelected());
                 mDrawTool = DrawTool.BUCKET;
-                tgbBucket.setSelected(true);
+                //tgbBucket.setSelected(true);
                 hidePenAndEffectsMenu();
+                resetEffectsSliders();
+                tgbSelectArea.setSelected(false);
+                tgbEffects.setSelected(false);
             } else if (newValue == tgbPen) {
                 mDrawTool = DrawTool.PEN;
-                tgbPen.setSelected(true);
+                //tgbPen.setSelected(true);
                 showPenDetails();
+                resetEffectsSliders();
+                tgbSelectArea.setSelected(false);
+                tgbEffects.setSelected(false);
                 if (mPenShape == PenShape.SQUARE) {
                     tgbSquare.setSelected(true);
                 } else {
                     tgbCircle.setSelected(true);
+                }
+            } else if (newValue == tgbPickColor) {
+                hidePenAndEffectsMenu();
+                resetEffectsSliders();
+                tgbSelectArea.setSelected(false);
+                tgbEffects.setSelected(false);
+            } else {
+                hidePenDetails();
+                if (tgTools.getSelectedToggle() != null) {
+                    tgTools.getSelectedToggle().setSelected(false);
                 }
             }
         });
@@ -325,16 +350,16 @@ public class Controller implements Initializable{
         });
 
         // **************************************** //
-        // **            COLOR ACTIONS           ** //
+        // **            COLOR PICKERS           ** //
         // **************************************** //
 
         // update color based on color picker menu dropdown
         cpkColor.setOnAction(event -> mColor = cpkColor.getValue());
 
-        // pick color using dropper
-        tgbPickColor.selectedProperty().addListener((observable, oldValue, newValue) -> {
-            mUserIsPickingColor = newValue;
-        });
+//        // pick color using dropper
+//        tgbPickColor.selectedProperty().addListener((observable, oldValue, newValue) -> {
+//            mUserIsPickingColor = newValue;
+//        });
 
         // **************************************** //
         // **    CHANGE VALUE FOR PEN SLIDERS    ** //
@@ -363,8 +388,21 @@ public class Controller implements Initializable{
 
         tgbEffects.selectedProperty().addListener((observable, oldValue, newValue) -> {
             showEffectsDetails();
+            if (tgTools.getSelectedToggle() != null) {
+                tgTools.getSelectedToggle().setSelected(false);
+            }
         });
 
+        // **************************************** //
+        // **        SELECT AREA BUTTON          ** //
+        // **************************************** //
+
+        tgbSelectArea.selectedProperty().addListener((observable, oldValue, newValue) -> {
+            hidePenDetails();
+            if (tgTools.getSelectedToggle() != null) {
+                tgTools.getSelectedToggle().setSelected(false);
+            }
+        });
 
         // **************************************** //
         // **  CHANGE VALUE FOR EFFECTS SLIDERS  ** //
@@ -437,7 +475,7 @@ public class Controller implements Initializable{
         int iMinY = (mRectangle != null) ? (int) mRectangle.getY() : 0;
         int iMaxX = (mRectangle != null) ? (int) mRectangle.getWidth() + iMinX : (int) mImageView.getImage().getWidth();
         int iMaxY = (mRectangle != null) ? (int) mRectangle.getHeight() + iMinY: (int) mImageView.getImage().getHeight();
-
+        removeSelection();
         WritableImage grayscaleImage = new WritableImage((int) mImageView.getImage().getWidth(), (int) mImageView.getImage().getHeight());
         PixelWriter pixelWriter = grayscaleImage.getPixelWriter();
         for (int x = 0; x < mImageView.getImage().getWidth(); x++) {
@@ -461,7 +499,7 @@ public class Controller implements Initializable{
         int iMinY = (mRectangle != null) ? (int) mRectangle.getY() : 0;
         int iMaxX = (mRectangle != null) ? (int) mRectangle.getWidth() + iMinX : (int) mImageView.getImage().getWidth();
         int iMaxY = (mRectangle != null) ? (int) mRectangle.getHeight() + iMinY: (int) mImageView.getImage().getHeight();
-
+        removeSelection();
         WritableImage inverseImage = new WritableImage((int) mImageView.getFitWidth(), (int) mImageView.getFitHeight());
         PixelWriter pixelWriter = inverseImage.getPixelWriter();
         for (int x = 0; x < mImageView.getImage().getWidth(); x++) {
@@ -511,7 +549,7 @@ public class Controller implements Initializable{
         int iMinY = (mRectangle != null) ? (int) mRectangle.getY() : 0;
         int iMaxX = (mRectangle != null) ? (int) mRectangle.getWidth() + iMinX : (int) mImageView.getImage().getWidth();
         int iMaxY = (mRectangle != null) ? (int) mRectangle.getHeight() + iMinY: (int) mImageView.getImage().getHeight();
-
+        removeSelection();
         WritableImage monoImage = new WritableImage((int) mImageView.getFitWidth(), (int) mImageView.getFitHeight());
         PixelWriter pixelWriter = monoImage.getPixelWriter();
         for (int x = 0; x < mImageView.getImage().getWidth() - 1; x++) {
@@ -526,7 +564,6 @@ public class Controller implements Initializable{
                 }
             }
         }
-
         mImageView.setImage(monoImage);
         updateImageAndProperties();
     }
@@ -574,9 +611,9 @@ public class Controller implements Initializable{
         Color pixelColor = mImageView.getImage().getPixelReader().getColor((int) xPos, (int) yPos);
         cpkColor.setValue(pixelColor);
         mColor = pixelColor;
-        mUserIsPickingColor = false;
-        tgbPickColor.setSelected(false);
-        ((Node) mouseEvent.getSource()).setCursor(Cursor.DEFAULT);
+        //mUserIsPickingColor = false;
+        //tgbPickColor.setSelected(false);
+        //((Node) mouseEvent.getSource()).setCursor(Cursor.DEFAULT);
     }
 
     // fill: paint
@@ -653,9 +690,7 @@ public class Controller implements Initializable{
                 }
             }
         }
-        // update the image
-        CommandCenter.getInstance().storeLastImageAsUndo();
-        CommandCenter.getInstance().setImageAndView(image);
+        mImageView.setImage(image);
     }
 
     // **************************************** //
@@ -672,6 +707,7 @@ public class Controller implements Initializable{
 
         // apply to selection or entire imageview
         if (mRectangle != null) {
+            mImageView.setEffect(null);
             updateColorAdjustEffectForSelection();
         } else {
             mImageView.setEffect(mColorAdjust);
@@ -680,8 +716,11 @@ public class Controller implements Initializable{
 
     // update the color adjust to current slider settings for a selection
     private void updateColorAdjustEffectForSelection() {
+        System.out.println("applying to selection");
         // get the selection if does not exist
         if (mSelectionView == null) {
+            System.out.println("creating selection imageview");
+
             mSelectionView = new ImageView();
             Image selectionImage = getSnapshotForSelection();
             mSelectionView.setImage(selectionImage);
@@ -692,6 +731,7 @@ public class Controller implements Initializable{
 
         // apply to the selection
         mSelectionView.setEffect(mColorAdjust);
+
     }
 
     // makes image effects permanent -> updates image and resets sliders
@@ -802,6 +842,8 @@ public class Controller implements Initializable{
 
     // remove rectangle selection
     private void removeSelection() {
+        mAnchorPane.getChildren().removeAll(mSelectionView);
+        mSelectionView = null;
         mAnchorPane.getChildren().remove(mRectangle);
         mRectangle = null;
     }
@@ -970,6 +1012,9 @@ public class Controller implements Initializable{
             BufferedImage bufferedImage = ImageIO.read(file);
             Image newImage = SwingFXUtils.toFXImage(bufferedImage, null);
 
+            resetEffectsSliders();
+            removeSelection();
+
             // update the application to display the image
             mImageView.setImage(newImage);
             Image currentImage = getSnapshot();
@@ -983,6 +1028,7 @@ public class Controller implements Initializable{
             CommandCenter.getInstance().clearRedoImages();
             disableRedo();
             disableUndo();
+
         } catch (Exception e) {
             System.out.println("there was an error loading the image file: ");
             System.out.println("  " + e);
@@ -1042,24 +1088,34 @@ public class Controller implements Initializable{
 
     // show the pen tool details
     private void showPenDetails() {
+        hideEffectsDetails();
         tbPenDetails.setManaged(true);
         tbPenDetails.setVisible(true);
-        tbEffects.setVisible(false);
-        tbEffects.setManaged(false);
     }
 
-    // show the effects
-    private void showEffectsDetails() {
-        tbEffects.setManaged(true);
-        tbEffects.setVisible(true);
+    // hide pen details
+    private void hidePenDetails() {
         tbPenDetails.setVisible(false);
         tbPenDetails.setManaged(false);
     }
 
+    // show the effects
+    private void showEffectsDetails() {
+        hidePenDetails();
+        tbEffects.setManaged(true);
+        tbEffects.setVisible(true);
+    }
+
+    // hide the effects
+    private void hideEffectsDetails() {
+        tbEffects.setVisible(false);
+        tbEffects.setManaged(false);
+    }
+
     // hide pen and effects menus
     private void hidePenAndEffectsMenu() {
-        tbPenDetails.setVisible(false);
-        tbEffects.setVisible(false);
+        hidePenDetails();
+        hideEffectsDetails();
     }
 
     // enable undo buttons

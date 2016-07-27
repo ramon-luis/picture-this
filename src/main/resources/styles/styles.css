@@ -21,10 +21,9 @@
 
 
 *.color-picker {
-    -fx-base: rgb(255, 255, 255);
-    -fx-background-size: 25px;
-    -fx-background-repeat: no-repeat;
-    -fx-background-position: 90%;
+    /*-fx-background-size: 25px;*/
+    /*-fx-background-repeat: no-repeat;*/
+    /*-fx-background-position: 90%;*/
 }
 
 *.toggle-button:hover {
@@ -35,14 +34,14 @@
     -fx-effect: dropshadow(gaussian, rgb(255,255,255), 10, 0, 0, 1);
 }
 
-*.toggle-button:selected {
-    -fx-background-color: rgb(25, 150, 255);
-    -fx-font-style: oblique;
-}
+/**.toggle-button:selected {*/
+    /*-fx-background-color: rgb(25, 150, 255);*/
+    /*-fx-font-style: oblique;*/
+/*}*/
 
-*.color-picker:selected {
-    -fx-effect: dropshadow(gaussian, rgb(255,255,255), 10, 0, 0, 1);
-}
+/**.color-picker:selected {*/
+    /*-fx-effect: dropshadow(gaussian, rgb(255,255,255), 10, 0, 0, 1);*/
+/*}*/
 
 *.menu:hover {
     -fx-effect: dropshadow(gaussian, rgb(255,255,255), 10, 0, 0, 1);
