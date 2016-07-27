@@ -14,7 +14,6 @@ import javafx.scene.effect.SepiaTone;
 import javafx.scene.image.PixelWriter;
 import javafx.scene.image.WritableImage;
 import javafx.scene.input.MouseEvent;
-import javafx.scene.layout.Pane;
 import javafx.scene.shape.*;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.control.*;
@@ -81,7 +80,7 @@ public class Controller implements Initializable{
     @FXML private ColorPicker cpkColor;
     @FXML private ToggleButton tgbBucket;
     @FXML private ToggleButton tgbPen;
-    @FXML private Group grpPenDetails;
+    @FXML private ToolBar tbPenDetails;
     @FXML private ToggleButton tgbCircle;
     @FXML private ToggleButton tgbSquare;
     @FXML private Slider sldPenSize;
@@ -95,7 +94,7 @@ public class Controller implements Initializable{
     @FXML private ToggleButton tgbSelectArea;
 
     @FXML private ToggleButton tgbEffects;
-    @FXML private Group grpEffects;
+    @FXML private ToolBar tbEffects;
     @FXML private Button btnApplyEffects;
     @FXML private Button btnResetEffects;
     @FXML private Slider sldBrightness;
@@ -363,7 +362,7 @@ public class Controller implements Initializable{
         // **************************************** //
 
         tgbEffects.selectedProperty().addListener((observable, oldValue, newValue) -> {
-            showEffectsGroup();
+            showEffectsDetails();
         });
 
 
@@ -418,6 +417,8 @@ public class Controller implements Initializable{
         btnInvert.setOnAction(event -> applyInvertFilter());
         btnGreyscale.setOnAction(event -> applyGrayscaleFilter());
         btnMonochrome.setOnAction(event -> applyMonoFilter());
+
+
     }
 
 
@@ -1041,20 +1042,24 @@ public class Controller implements Initializable{
 
     // show the pen tool details
     private void showPenDetails() {
-        grpPenDetails.setVisible(true);
-        grpEffects.setVisible(false);
+        tbPenDetails.setManaged(true);
+        tbPenDetails.setVisible(true);
+        tbEffects.setVisible(false);
+        tbEffects.setManaged(false);
     }
 
     // show the effects
-    private void showEffectsGroup() {
-        grpEffects.setVisible(true);
-        grpPenDetails.setVisible(false);
+    private void showEffectsDetails() {
+        tbEffects.setManaged(true);
+        tbEffects.setVisible(true);
+        tbPenDetails.setVisible(false);
+        tbPenDetails.setManaged(false);
     }
 
     // hide pen and effects menus
     private void hidePenAndEffectsMenu() {
-        grpPenDetails.setVisible(false);
-        grpEffects.setVisible(false);
+        tbPenDetails.setVisible(false);
+        tbEffects.setVisible(false);
     }
 
     // enable undo buttons

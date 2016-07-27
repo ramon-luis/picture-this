@@ -68,7 +68,7 @@
                     <!--<children>-->
                         <!--<Group fx:id="grpDraw" layoutY="3.0" visible="false">-->
                             <!--<children>-->
-                                <!--<Group fx:id="grpPenDetails" layoutX="-1.0" layoutY="5.0">-->
+                                <!--<Group fx:id="tbPenDetails" layoutX="-1.0" layoutY="5.0">-->
                                     <!--<children>-->
                                         <!--<Group fx:id="grpPenShape" layoutX="-123.0">-->
                                             <!--<children>-->
@@ -128,7 +128,7 @@
                                 <!--</Group>-->
                             <!--</children>-->
                         <!--</Group>-->
-                        <!--<Group fx:id="grpEffects" layoutX="7.0" layoutY="4.0">-->
+                        <!--<Group fx:id="tbEffects" layoutX="7.0" layoutY="4.0">-->
                             <!--<children>-->
                                 <!--<Group>-->
                                     <!--<children>-->
