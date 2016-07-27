@@ -1,12 +1,16 @@
 TODO
-outer border???
+
 too many redos
 draw tools not activating on first click when select is active
 reset toolbar on open
-
 images for pen shape
 tool tips
 blur
+outer border???
+
+
+
+
 
 extra effects:
         - blur, bloom, glow
