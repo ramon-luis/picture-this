@@ -111,7 +111,7 @@
                                 <!--<Group fx:id="grpColor" layoutX="-31.0">-->
                                     <!--<children>-->
                                         <!--<ColorPicker fx:id="cpkColor" layoutX="37.0" layoutY="4.0" />-->
-                                        <!--<ToggleButton fx:id="tgbPickColor" layoutX="37.0" layoutY="37.0" mnemonicParsing="false" prefHeight="27.0" prefWidth="89.0" text="Pick Color" />-->
+                                        <!--<ToggleButton fx:id="tgbDropper" layoutX="37.0" layoutY="37.0" mnemonicParsing="false" prefHeight="27.0" prefWidth="89.0" text="Pick Color" />-->
                                     <!--</children>-->
                                 <!--</Group>-->
                                 <!--<Group fx:id="grpDrawTool" layoutX="-272.0" layoutY="5.0">-->

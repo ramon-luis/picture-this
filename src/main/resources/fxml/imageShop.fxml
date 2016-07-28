@@ -52,15 +52,17 @@
 
         <ToolBar fx:id="tbPenDetails" orientation="HORIZONTAL">
             <items>
-                <Text fill="WHITE" strokeType="OUTSIDE" strokeWidth="0.0" text="Pen Shape" textAlignment="LEFT">
+                <Text fill="WHITE" strokeType="OUTSIDE" strokeWidth="0.0" text="Pen Shape:" textAlignment="LEFT">
                     <font>
                         <Font name="System Bold" size="13.0" />
                     </font>
                 </Text>
-                <ToggleButton fx:id="tgbCircle" mnemonicParsing="false" text="Circle" />
-                <ToggleButton fx:id="tgbSquare" mnemonicParsing="false" text="Square" />
+                <Separator fx:id="spPenShape1" orientation="VERTICAL" prefWidth="15" />
+                <ToggleButton fx:id="tgbCircle" mnemonicParsing="false" prefWidth="5" prefHeight="5"/>
+                <Separator fx:id="spPenShape2" orientation="VERTICAL" prefWidth="20" />
+                <ToggleButton fx:id="tgbSquare" mnemonicParsing="false" prefWidth="5" prefHeight="5"/>
                 <Separator orientation="VERTICAL" prefWidth="20"/>
-                <Text fill="WHITE" strokeType="OUTSIDE" strokeWidth="0.0" text="Pen Size" textAlignment="CENTER">
+                <Text fill="WHITE" strokeType="OUTSIDE" strokeWidth="0.0" text="Pen Size:" textAlignment="CENTER">
                     <font>
                         <Font name="System Bold" size="13.0" />
                     </font>
@@ -68,7 +70,7 @@
                 <Slider fx:id="sldPenSize" min="1.0" max="100.0" value="20.0" />
                 <Button fx:id="btnResetPenSize" mnemonicParsing="false" text="Reset" />
                 <Separator orientation="VERTICAL" prefWidth="20"/>
-                <Text fill="WHITE" strokeType="OUTSIDE" strokeWidth="0.0" text="Pen Pressure" textAlignment="CENTER">
+                <Text fill="WHITE" strokeType="OUTSIDE" strokeWidth="0.0" text="Pen Pressure:" textAlignment="CENTER">
                     <font>
                         <Font name="System Bold" size="13.0"/>
                     </font>
@@ -84,7 +86,7 @@
                 <Button fx:id="btnApplyEffects" mnemonicParsing="false" text="Apply"/>
                 <Button fx:id="btnResetEffects" text="Cancel"/>
                 <Separator orientation="VERTICAL" prefWidth="20" />
-                <Text fill="WHITE" strokeType="OUTSIDE" strokeWidth="0.0" text="Brightness" textAlignment="CENTER" >
+                <Text fill="WHITE" strokeType="OUTSIDE" strokeWidth="0.0" text="Brightness:" textAlignment="CENTER" >
                     <font>
                         <Font name="System Bold" size="13.0" />
                     </font>
@@ -93,7 +95,7 @@
                 <Button fx:id="btnResetBrightness" mnemonicParsing="false" text="Reset" />
 
                 <Separator orientation="VERTICAL" prefWidth="20" />
-                <Text fill="WHITE" strokeType="OUTSIDE" strokeWidth="0.0" text="Contrast" textAlignment="CENTER">
+                <Text fill="WHITE" strokeType="OUTSIDE" strokeWidth="0.0" text="Contrast:" textAlignment="CENTER">
                     <font>
                         <Font name="System Bold" size="13.0"/>
                     </font>
@@ -101,7 +103,7 @@
                 <Slider fx:id="sldContrast" min="-100.0" max="100" value="0.0"/>
                 <Button fx:id="btnResetContrast" mnemonicParsing="false" text="Reset" />
                 <Separator orientation="VERTICAL" prefWidth="20" />
-                <Text fill="WHITE" strokeType="OUTSIDE" strokeWidth="0.0" text="Hue" textAlignment="CENTER">
+                <Text fill="WHITE" strokeType="OUTSIDE" strokeWidth="0.0" text="Hue:" textAlignment="CENTER">
                     <font>
                         <Font name="System Bold" size="13.0" />
                     </font>
@@ -109,7 +111,7 @@
                 <Slider fx:id="sldHue" min="-100.0" max="100" value="0.0"/>
                 <Button fx:id="btnResetHue" mnemonicParsing="false" text="Reset" />
                 <Separator orientation="VERTICAL" prefWidth="20" />
-                <Text fill="WHITE" strokeType="OUTSIDE" strokeWidth="0.0" text="Saturate" textAlignment="CENTER">
+                <Text fill="WHITE" strokeType="OUTSIDE" strokeWidth="0.0" text="Saturate:" textAlignment="CENTER">
                     <font>
                         <Font name="System Bold" size="13.0" />
                     </font>
@@ -124,7 +126,7 @@
                 <ToolBar fx:id="tbMain" orientation="VERTICAL" >
                     <items>
                         <ColorPicker fx:id="cpkColor" styleClass="button" prefWidth="30" prefHeight="30"/>
-                        <ToggleButton fx:id="tgbPickColor" prefWidth="30" prefHeight="30" mnemonicParsing="false"/>
+                        <ToggleButton fx:id="tgbDropper" prefWidth="30" prefHeight="30" mnemonicParsing="false"/>
                         <ToggleButton fx:id="tgbBucket" prefWidth="30" prefHeight="30" mnemonicParsing="false" />
                         <ToggleButton fx:id="tgbPen" prefWidth="30" prefHeight="30" mnemonicParsing="false" />
                         <Separator prefWidth="30" prefHeight="5"/>
@@ -143,9 +145,9 @@
                 </ToolBar>
                 <ScrollPane prefHeight="700.0" prefWidth="1300.0">
                     <content>
-                        <AnchorPane fx:id="mAnchorPane" minHeight="0.0" minWidth="0.0" prefHeight="700.0" prefWidth="1300.0">
+                        <AnchorPane fx:id="mAnchorPane" prefHeight="700.0" prefWidth="1300.0">
                             <children>
-                                <ImageView fx:id="mImageView" fitHeight="700.0" fitWidth="1300.0" pickOnBounds="true" preserveRatio="true" />
+                                <ImageView fx:id="mImageView" fitHeight="700.0" fitWidth="1300.0" pickOnBounds="true" preserveRatio="true" smooth="true"/>
                             </children>
                         </AnchorPane>
                     </content>

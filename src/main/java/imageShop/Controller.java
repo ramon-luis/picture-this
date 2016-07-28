@@ -41,30 +41,31 @@ import java.util.ResourceBundle;
 public class Controller implements Initializable{
 
     private enum PenShape {CIRCLE, SQUARE}
-    private enum DrawTool {BUCKET, PEN}
-    private enum ActionSet {DRAW, EFFECTS, FILTERS}
-
 
     private static final String DROPPER_IMAGE = "/images/dropper.png";
     private static final String BUCKET_IMAGE = "/images/bucket.png";
-    private static final double DOUBLE_THRESHOLD = 0.1;
     private static final double DEFAULT_PEN_SIZE = 20.0;
     private static final double DEFAULT_PEN_PRESSURE = 75.0;
     private static final double DEFAULT_EFFECTS_VALUE = 0.0;
 
-    private ActionSet mActionSet;
+    private static final Circle mCircle = new Circle(11.5);
+    private static final Rectangle mSquare = new Rectangle(20.0, 20.0);
+
     private Color mColor = Color.rgb(25, 150, 255);
-    private DrawTool mDrawTool;
     private PenShape mPenShape;
     private int mPenSize;
     private double mPenPressure;
     private Rectangle mRectangle;
     private double xPos, yPos;
-    private boolean mUserIsPickingColor = false;
     private boolean mIsOpenDialogBox = false;
     private ColorAdjust mColorAdjust = new ColorAdjust();
     private ArrayList<Shape> removeShapes = new ArrayList<>(1000);
     private File mCurrentFile;
+
+
+    @FXML private AnchorPane mAnchorPane;
+    @FXML private ImageView mImageView;
+    @FXML private ImageView mSelectionView;
 
     @FXML private Menu menuOpenRecent;
     @FXML private MenuItem menuRecentFile1;
@@ -76,8 +77,8 @@ public class Controller implements Initializable{
     @FXML private MenuItem menuRedo;
     @FXML private MenuItem menuStartOver;
 
-    @FXML private ToggleButton tgbPickColor;
     @FXML private ColorPicker cpkColor;
+    @FXML private ToggleButton tgbDropper;
     @FXML private ToggleButton tgbBucket;
     @FXML private ToggleButton tgbPen;
     @FXML private ToolBar tbPenDetails;
@@ -111,14 +112,21 @@ public class Controller implements Initializable{
     @FXML private Button btnMonochrome;
 
     @FXML private ToggleGroup tgTools = new ToggleGroup();
-    @FXML private ToggleGroup tgSelectEdit = new ToggleGroup();
-
     @FXML private ToggleGroup tgPenShape = new ToggleGroup();
 
-    @FXML private AnchorPane mAnchorPane;
-    @FXML private ImageView mImageView;
-    @FXML private ImageView mSelectionView;
-
+    @FXML private Tooltip ttColorPicker = new Tooltip("choose color");
+    @FXML private Tooltip ttDropper = new Tooltip("dropper: pick color");
+    @FXML private Tooltip ttBucket = new Tooltip("paint bucket");
+    @FXML private Tooltip ttPen = new Tooltip("pen");
+    @FXML private Tooltip ttUndo  = new Tooltip("undo");
+    @FXML private Tooltip ttRedo = new Tooltip("redo");
+    @FXML private Tooltip ttStartOver = new Tooltip("start over");
+    @FXML private Tooltip ttSelectArea = new Tooltip("select area");
+    @FXML private Tooltip ttEffects = new Tooltip("effects settings");
+    @FXML private Tooltip ttGreyscale = new Tooltip("greyscale");
+    @FXML private Tooltip ttSepia = new Tooltip("sepia");
+    @FXML private Tooltip ttInvert = new Tooltip("invert");
+    @FXML private Tooltip ttMonochrome = new Tooltip("monochrome");
 
     @FXML void menuOpenAction(ActionEvent event) {
         openFile();
@@ -199,7 +207,7 @@ public class Controller implements Initializable{
         CommandCenter.getInstance().setImageAndView(initialImage);
 
         // assign toggle groups
-        tgbPickColor.setToggleGroup(tgTools);
+        tgbDropper.setToggleGroup(tgTools);
         tgbBucket.setToggleGroup(tgTools);
         tgbPen.setToggleGroup(tgTools);
         tgbCircle.setToggleGroup(tgPenShape);
@@ -209,11 +217,9 @@ public class Controller implements Initializable{
         cpkColor.setValue(mColor);
 
         // hide open recent, hide tools, disable undo/edo
-        hideRecentFileMenu();
-        hidePenAndEffectsMenu();
-        disableRedo();
-        disableUndo();
-        enableStartOver();
+        setPenShapeIcons();
+        resetAllMenusAndToolbars();
+        assignToolTips();
 
         // **************************************** //
         // **            MOUSE ACTIONS           ** //
@@ -222,13 +228,13 @@ public class Controller implements Initializable{
         // mouse enters area
         mImageView.addEventFilter(MouseEvent.MOUSE_ENTERED, mouseEvent -> {
             setMouseToPointer(mouseEvent);
-            if (!mIsOpenDialogBox) {
+            if (!mIsOpenDialogBox && !cpkColor.isShowing()) {
                 // order matters: from specific to general actions
                 if (tgbSelectArea.isSelected()) {
                     setMouseToCross(mouseEvent);
                 } else if (tgbEffects.isSelected()) {
                     setMouseToPointer(mouseEvent);
-                } else if (tgbPickColor.isSelected()) {
+                } else if (tgbDropper.isSelected()) {
                     setMouseToDropper(mouseEvent);
                 } else if (tgbBucket.isSelected()) {
                     System.out.println("bucket icon");
@@ -252,7 +258,7 @@ public class Controller implements Initializable{
                 }
             } else if (tgbEffects.isSelected()) {
                 // do nothing
-            } else if (tgbPickColor.isSelected()) {
+            } else if (tgbDropper.isSelected()) {
                 pickColorFromDropper(mouseEvent);
             } else if (tgbBucket.isSelected()) {
                 fillFromBucket(mouseEvent);
@@ -269,7 +275,7 @@ public class Controller implements Initializable{
                updateRectangle(mouseEvent);
             } else if (tgbEffects.isSelected()) {
                 // do nothing
-            } else if (tgbPickColor.isSelected()) {
+            } else if (tgbDropper.isSelected()) {
                 // do nothing
             } else if (tgbBucket.isSelected()) {
                 fillFromBucket(mouseEvent);
@@ -286,7 +292,7 @@ public class Controller implements Initializable{
                 updateRectangle(mouseEvent);
             } else if (tgbEffects.isSelected()) {
                 // do nothing
-            } else if (tgbPickColor.isSelected()) {
+            } else if (tgbDropper.isSelected()) {
                 // do nothing
             } else if (tgbBucket.isSelected()) {
                 updateImageAndProperties();
@@ -305,17 +311,13 @@ public class Controller implements Initializable{
             System.out.println("tool selected");
             removeSelection();
             if (newValue == tgbBucket) {
-                System.out.println("buclet selected");
+                System.out.println("bucket selected");
                 System.out.println("bucket tgb is selected: " + tgbBucket.isSelected());
-                mDrawTool = DrawTool.BUCKET;
-                //tgbBucket.setSelected(true);
                 hidePenAndEffectsMenu();
                 resetEffectsSliders();
                 tgbSelectArea.setSelected(false);
                 tgbEffects.setSelected(false);
             } else if (newValue == tgbPen) {
-                mDrawTool = DrawTool.PEN;
-                //tgbPen.setSelected(true);
                 showPenDetails();
                 resetEffectsSliders();
                 tgbSelectArea.setSelected(false);
@@ -325,7 +327,7 @@ public class Controller implements Initializable{
                 } else {
                     tgbCircle.setSelected(true);
                 }
-            } else if (newValue == tgbPickColor) {
+            } else if (newValue == tgbDropper) {
                 hidePenAndEffectsMenu();
                 resetEffectsSliders();
                 tgbSelectArea.setSelected(false);
@@ -354,12 +356,7 @@ public class Controller implements Initializable{
         // **************************************** //
 
         // update color based on color picker menu dropdown
-        cpkColor.setOnAction(event -> mColor = cpkColor.getValue());
-
-//        // pick color using dropper
-//        tgbPickColor.selectedProperty().addListener((observable, oldValue, newValue) -> {
-//            mUserIsPickingColor = newValue;
-//        });
+        cpkColor.setOnAction(event -> updateColor());
 
         // **************************************** //
         // **    CHANGE VALUE FOR PEN SLIDERS    ** //
@@ -455,6 +452,8 @@ public class Controller implements Initializable{
         btnInvert.setOnAction(event -> applyInvertFilter());
         btnGreyscale.setOnAction(event -> applyGrayscaleFilter());
         btnMonochrome.setOnAction(event -> applyMonoFilter());
+
+
 
 
     }
@@ -572,6 +571,12 @@ public class Controller implements Initializable{
     // **       DRAW & PAINT METHODS         ** //
     // **************************************** //
 
+    // update the color for paint, draw, and pen shapes
+    private void updateColor() {
+        mColor = cpkColor.getValue();
+        updatePenShapesColor();
+    }
+
     // draw with pen tool
     private void drawPen(MouseEvent mouseEvent) {
         // update x and y position from mouse
@@ -599,21 +604,22 @@ public class Controller implements Initializable{
         }
 
         // set the color and pressure before returning
-        penShape.setFill(mColor);
+        if (mColor != null) {
+            penShape.setFill(mColor);
+        }
+
         penShape.setOpacity(mPenPressure);
+
         return penShape;
     }
 
     // get the color from image using dropper
-    public void pickColorFromDropper(MouseEvent mouseEvent) {
+    private void pickColorFromDropper(MouseEvent mouseEvent) {
         xPos = mouseEvent.getX();
         yPos = mouseEvent.getY();
         Color pixelColor = mImageView.getImage().getPixelReader().getColor((int) xPos, (int) yPos);
         cpkColor.setValue(pixelColor);
         mColor = pixelColor;
-        //mUserIsPickingColor = false;
-        //tgbPickColor.setSelected(false);
-        //((Node) mouseEvent.getSource()).setCursor(Cursor.DEFAULT);
     }
 
     // fill: paint
@@ -716,11 +722,8 @@ public class Controller implements Initializable{
 
     // update the color adjust to current slider settings for a selection
     private void updateColorAdjustEffectForSelection() {
-        System.out.println("applying to selection");
         // get the selection if does not exist
         if (mSelectionView == null) {
-            System.out.println("creating selection imageview");
-
             mSelectionView = new ImageView();
             Image selectionImage = getSnapshotForSelection();
             mSelectionView.setImage(selectionImage);
@@ -761,6 +764,8 @@ public class Controller implements Initializable{
     // get a "snap" of screen's current image
     private Image getSnapshot() {
         SnapshotParameters snapshotParameters = new SnapshotParameters();
+        snapshotParameters.setViewport(mImageView.getViewport());
+//            snapshotParameters.setViewport(new Rectangle2D(mImageView.getX(), mImageView.getY(), mImageView.getImage().getWidth(), mImageView.getImage().getHeight()));
         return mAnchorPane.snapshot(snapshotParameters, null);
     }
 
@@ -776,6 +781,8 @@ public class Controller implements Initializable{
     private void updateImageAndProperties() {
         removeSelection();
         CommandCenter.getInstance().storeLastImageAsUndo();
+        CommandCenter.getInstance().clearRedoImages();  // new "path" so clear redo images
+        disableRedo();
         enableUndo();
         Image currentImage = getSnapshot();
         CommandCenter.getInstance().setImageAndView(currentImage);
@@ -887,9 +894,9 @@ public class Controller implements Initializable{
         FileChooser fileChooser = new FileChooser();
 
         // create file extension filters and add them to the file chooser
-        FileChooser.ExtensionFilter extFilterJPG = new FileChooser.ExtensionFilter("JPG files (*.jpg)", "*.JPG");
         FileChooser.ExtensionFilter extFilterPNG = new FileChooser.ExtensionFilter("PNG files (*.png)", "*.PNG");
-        fileChooser.getExtensionFilters().addAll(extFilterJPG, extFilterPNG);
+        FileChooser.ExtensionFilter extFilterJPG = new FileChooser.ExtensionFilter("JPG files (*.jpg)", "*.JPG");
+        fileChooser.getExtensionFilters().addAll(extFilterPNG, extFilterJPG);
 
         // open the file choose dialog box and try to update with the selected image
         File file = fileChooser.showOpenDialog(null);
@@ -928,9 +935,9 @@ public class Controller implements Initializable{
         FileChooser fileChooser = new FileChooser();
 
         // create file extension filters and add them to the file chooser
-        FileChooser.ExtensionFilter extFilterJPG = new FileChooser.ExtensionFilter("JPG files (*.jpg)", "*.JPG");
+//        FileChooser.ExtensionFilter extFilterJPG = new FileChooser.ExtensionFilter("JPG files (*.jpg)", "*.JPG");
         FileChooser.ExtensionFilter extFilterPNG = new FileChooser.ExtensionFilter("PNG files (*.png)", "*.PNG");
-        fileChooser.getExtensionFilters().addAll(extFilterJPG, extFilterPNG);
+        fileChooser.getExtensionFilters().addAll(extFilterPNG);
 
         // open the file choose dialog box and try to update with the selected image
         File file = fileChooser.showSaveDialog(null);
@@ -1006,7 +1013,7 @@ public class Controller implements Initializable{
     }
 
     // try to read an image file
-    public void openImageFile(File file) {
+    private void openImageFile(File file) {
         try {
             // read the file & convert to FX Image object type
             BufferedImage bufferedImage = ImageIO.read(file);
@@ -1026,8 +1033,7 @@ public class Controller implements Initializable{
             // no undo or redo -> new file
             CommandCenter.getInstance().clearUndoImages();
             CommandCenter.getInstance().clearRedoImages();
-            disableRedo();
-            disableUndo();
+            resetAllMenusAndToolbars();
 
         } catch (Exception e) {
             System.out.println("there was an error loading the image file: ");
@@ -1045,6 +1051,7 @@ public class Controller implements Initializable{
             Image currentImage = getSnapshot();
             CommandCenter.getInstance().addRedoImage(currentImage);
             Image undoImage = CommandCenter.getInstance().getUndoImage();
+            resetEffectsSliders();
             CommandCenter.getInstance().setImageAndView(undoImage);
             mImageView.setImage(undoImage);
             enableRedo();
@@ -1056,6 +1063,7 @@ public class Controller implements Initializable{
 
     // redo action
     private void redo() {
+        System.out.println("redo image added");
         if (CommandCenter.getInstance().hasRedoImage()) {
             Image currentImage = getSnapshot();
             CommandCenter.getInstance().addUndoImage(currentImage);
@@ -1086,11 +1094,25 @@ public class Controller implements Initializable{
     // **     HIDE & SHOW TOOLBAR METHODS    ** //
     // **************************************** //
 
+    private void resetAllMenusAndToolbars() {
+        if (tgTools.getSelectedToggle() != null) {
+            tgTools.getSelectedToggle().setSelected(false);
+        }
+        tgbSelectArea.setSelected(false);
+        tgbEffects.setSelected(false);
+        hideRecentFileMenu();
+        hidePenAndEffectsMenu();
+        disableRedo();
+        disableUndo();
+        enableStartOver();
+    }
+
     // show the pen tool details
     private void showPenDetails() {
         hideEffectsDetails();
         tbPenDetails.setManaged(true);
         tbPenDetails.setVisible(true);
+        updatePenShapesColor();
     }
 
     // hide pen details
@@ -1148,5 +1170,37 @@ public class Controller implements Initializable{
         btnStartOver.setDisable(false);
     }
 
+
+    // **************************************** //
+    // **       PEN TOOLBAR & TOOLTIPS       ** //
+    // **************************************** //
+
+    private void updatePenShapesColor() {
+        mCircle.setFill(mColor);
+        mSquare.setFill(mColor);
+    }
+
+    private void setPenShapeIcons() {
+        updatePenShapesColor();
+        tgbCircle.setGraphic(mCircle);
+
+        tgbSquare.setGraphic(mSquare);
+    }
+
+    private void assignToolTips() {
+        cpkColor.setTooltip(ttColorPicker);
+        tgbDropper.setTooltip(ttDropper);
+        tgbBucket.setTooltip(ttBucket);
+        tgbPen.setTooltip(ttPen);
+        btnUndo.setTooltip(ttUndo);
+        btnRedo.setTooltip(ttRedo);
+        btnStartOver.setTooltip(ttStartOver);
+        tgbSelectArea.setTooltip(ttSelectArea);
+        tgbEffects.setTooltip(ttEffects);
+        btnGreyscale.setTooltip(ttGreyscale);
+        btnSepia.setTooltip(ttSepia);
+        btnInvert.setTooltip(ttInvert);
+        btnMonochrome.setTooltip(ttMonochrome);
+    }
 
 }

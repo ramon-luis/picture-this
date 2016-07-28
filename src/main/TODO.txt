@@ -1,18 +1,8 @@
 TODO
 
-too many redos
+
+outer border ??? --> set image size to imageview or vice versa (or scroll panel)
 draw tools not activating on first click when select is active
-reset toolbar on open
-images for pen shape
-tool tips
 blur
-outer border???
-
-
-
-
-
-extra effects:
-        - blur, bloom, glow
-        - rotate
-        - image pattern
+rotate
+image pattern
