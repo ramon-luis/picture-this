@@ -5,25 +5,25 @@
 }
 
 *.toggle-button {
-    -fx-base: rgb(255, 255, 255);
+    -fx-base: lightgray;
     -fx-background-size: 25px;
     -fx-background-repeat: no-repeat;
     -fx-background-position: 80%;
 }
 
 *.button {
-    -fx-base: rgb(255, 255, 255);
+    -fx-base: lightgray;
     -fx-background-size: 25px;
     -fx-background-repeat: no-repeat;
     -fx-background-position: 80%;
 }
 
 *.toggle-button:hover {
-    -fx-effect: dropshadow(gaussian, rgb(255,255,255), 10, 0, 0, 1);
+    -fx-effect: dropshadow(gaussian, white, 10, 0, 0, 1);
 }
 
 *.color-picker:hover {
-    -fx-effect: dropshadow(gaussian, rgb(255,255,255), 10, 0, 0, 1);
+    -fx-effect: dropshadow(gaussian, white, 10, 0, 0, 1);
 }
 
 /**.toggle-button:selected {*/
