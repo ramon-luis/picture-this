@@ -37,6 +37,14 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.ResourceBundle;
 
+/**
+ * Controller has primary logic for application.
+ * Structure is:
+ *   FXML methods
+ *   Initialize
+ *   Logic & Helper Methods
+ */
+
 public class Controller implements Initializable{
 
     private enum PenShape {CIRCLE, SQUARE}
@@ -60,7 +68,6 @@ public class Controller implements Initializable{
     private ColorAdjust mColorAdjust = new ColorAdjust();
     private ArrayList<Shape> removeShapes = new ArrayList<>(1000);
     private File mCurrentFile;
-
 
     @FXML private AnchorPane mAnchorPane;
     @FXML private ImageView mImageView;
@@ -128,6 +135,11 @@ public class Controller implements Initializable{
     @FXML private Tooltip ttInvert = new Tooltip("invert");
     @FXML private Tooltip ttMonochrome = new Tooltip("monochrome");
     @FXML private Tooltip ttGlow = new Tooltip("glow");
+
+
+    // **************************************** //
+    // **     FXML METHODS FOR MENU BAR      ** //
+    // **************************************** //
 
     @FXML void menuOpenAction(ActionEvent event) {
         openFile();
@@ -353,7 +365,7 @@ public class Controller implements Initializable{
         });
 
         // **************************************** //
-        // **            COLOR PICKERS           ** //
+        // **            COLOR PICKER            ** //
         // **************************************** //
 
         // update color based on color picker menu dropdown

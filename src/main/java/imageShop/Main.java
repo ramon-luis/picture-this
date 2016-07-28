@@ -13,11 +13,9 @@ public class Main extends Application {
 
     public static void main(String[] args) {
         launch(args);
-
     }
 
     public void start(Stage stage) throws Exception {
-
         String fxmlFile = "/fxml/imageShop.fxml";
         FXMLLoader loader = new FXMLLoader();
         Parent rootNode = loader.load(getClass().getResourceAsStream(fxmlFile));
@@ -26,9 +24,5 @@ public class Main extends Application {
         stage.setTitle("Picture This");
         stage.setScene(scene);
         stage.show();
-
-        CommandCenter.getInstance().setMainStage(stage);
-
-
     }
 }

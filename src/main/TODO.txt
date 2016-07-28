@@ -1,8 +1,5 @@
 TODO
-
-
 outer border ??? --> set image size to imageview or vice versa (or scroll panel)
 draw tools not activating on first click when select is active
-blur
 rotate
 image pattern

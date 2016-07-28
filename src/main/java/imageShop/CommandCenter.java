@@ -2,14 +2,12 @@ package imageShop;
 
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.image.WritableImage;
-import javafx.stage.Stage;
-
 import java.io.File;
 import java.util.List;
 
 /**
- * Created by RAM0N on 7/19/16.
+ * Command Center is structured to manage the "memory" of the application: what is the most recent image,
+ * the original image, lists of images for undos, redos, and recent files.
  */
 
 
@@ -20,7 +18,6 @@ public class CommandCenter {
     public static final int MAX_RECENT_FILE_COUNT = 5;
 
     private static CommandCenter stateManager;
-    private Stage mMainStage, mSaturationStage;
     private ImageView mImageView;
     private Image mImage, mOriginalImage;
     private static MaxSizeStack<Image> sBackImages, sForwardImages;
@@ -40,10 +37,6 @@ public class CommandCenter {
 
         }
         return stateManager;
-    }
-
-    public void setMainStage(Stage mainStage) {
-        this.mMainStage = mainStage;
     }
 
     public void setImageView(ImageView imageView) {
@@ -111,19 +104,6 @@ public class CommandCenter {
 
     public List<File> getRecentFiles() {
         return sRecentFiles.getAsLinkedList();
-    }
-
-    public static Image transformSelection(Image imageIn, ColorTransformer f) {
-        int width = (int) imageIn.getWidth();
-        int height = (int) imageIn.getHeight();
-        WritableImage imageOut = new WritableImage(width, height);
-        for (int x = 0; x < width; x++) {
-            for (int y = 0; y < height; y++) {
-                imageOut.getPixelWriter().setColor(x, y,
-                        f.apply(x, y, imageIn.getPixelReader().getColor(x, y)));
-            }
-        }
-        return imageOut;
     }
 
     public Image getOriginalImage() {
