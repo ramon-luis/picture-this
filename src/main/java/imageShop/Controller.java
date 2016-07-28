@@ -9,8 +9,7 @@ import javafx.scene.Cursor;
 import javafx.scene.control.Button;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
-import javafx.scene.effect.ColorAdjust;
-import javafx.scene.effect.SepiaTone;
+import javafx.scene.effect.*;
 import javafx.scene.image.PixelWriter;
 import javafx.scene.image.WritableImage;
 import javafx.scene.input.MouseEvent;
@@ -110,6 +109,7 @@ public class Controller implements Initializable{
     @FXML private Button btnSepia;
     @FXML private Button btnInvert;
     @FXML private Button btnMonochrome;
+    @FXML private Button btnGlow;
 
     @FXML private ToggleGroup tgTools = new ToggleGroup();
     @FXML private ToggleGroup tgPenShape = new ToggleGroup();
@@ -127,6 +127,7 @@ public class Controller implements Initializable{
     @FXML private Tooltip ttSepia = new Tooltip("sepia");
     @FXML private Tooltip ttInvert = new Tooltip("invert");
     @FXML private Tooltip ttMonochrome = new Tooltip("monochrome");
+    @FXML private Tooltip ttGlow = new Tooltip("glow");
 
     @FXML void menuOpenAction(ActionEvent event) {
         openFile();
@@ -452,8 +453,7 @@ public class Controller implements Initializable{
         btnInvert.setOnAction(event -> applyInvertFilter());
         btnGreyscale.setOnAction(event -> applyGrayscaleFilter());
         btnMonochrome.setOnAction(event -> applyMonoFilter());
-
-
+        btnGlow.setOnAction(event -> applyGlowFilter());
 
 
     }
@@ -520,25 +520,7 @@ public class Controller implements Initializable{
     private void applySepiaFilter() {
         SepiaTone sepiaTone = new SepiaTone();
         sepiaTone.setLevel(0.70);
-        if (mRectangle != null) {
-            ImageView tempView = new ImageView();
-            Image tempImage = getSnapshotForSelection();
-            tempView.setImage(tempImage);
-            tempView.setEffect(sepiaTone);
-            mAnchorPane.getChildren().add(tempView);
-            tempView.setX(mRectangle.getX());
-            tempView.setY(mRectangle.getY());
-            Image sepiaImage = getSnapshot();
-            mAnchorPane.getChildren().remove(tempView);
-            mImageView.setImage(sepiaImage);
-        } else {
-            mImageView.setEffect(sepiaTone);
-            Image sepiaImage = getSnapshot();
-            sepiaTone.setLevel(0.0);
-            mImageView.setEffect(sepiaTone);
-            mImageView.setImage(sepiaImage);
-        }
-        updateImageAndProperties();
+        updateImageEffect(sepiaTone);
     }
 
     // mono filter
@@ -565,6 +547,37 @@ public class Controller implements Initializable{
         }
         mImageView.setImage(monoImage);
         updateImageAndProperties();
+    }
+
+    private void applyGlowFilter() {
+        Glow glow = new Glow();
+        glow.setLevel(0.3);
+        updateImageEffect(glow);
+    }
+
+    private void updateImageEffect(Effect effect) {
+        if (mRectangle != null) {
+            updateSelectionEffect(effect);
+        } else {
+            mImageView.setEffect(effect);
+            Image updatedImage = getSnapshot();
+            mImageView.setEffect(null);
+            mImageView.setImage(updatedImage);
+        }
+        updateImageAndProperties();
+    }
+
+    private void updateSelectionEffect(Effect effect) {
+        ImageView tempView = new ImageView();
+        Image tempImage = getSnapshotForSelection();
+        tempView.setImage(tempImage);
+        tempView.setEffect(effect);
+        mAnchorPane.getChildren().add(tempView);
+        tempView.setX(mRectangle.getX());
+        tempView.setY(mRectangle.getY());
+        Image updatedImage = getSnapshot();
+        mAnchorPane.getChildren().remove(tempView);
+        mImageView.setImage(updatedImage);
     }
 
     // **************************************** //
@@ -1201,6 +1214,7 @@ public class Controller implements Initializable{
         btnSepia.setTooltip(ttSepia);
         btnInvert.setTooltip(ttInvert);
         btnMonochrome.setTooltip(ttMonochrome);
+        btnGlow.setTooltip(ttGlow);
     }
 
 }

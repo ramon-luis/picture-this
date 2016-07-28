@@ -137,5 +137,11 @@
     -fx-background-position: 50%;
 }
 
+#btnGlow {
+    -fx-background-image: url('/images/glow.png');
+    -fx-background-size: 30px;
+    -fx-background-position: 50%;
+}
+
 
 

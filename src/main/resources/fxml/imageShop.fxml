@@ -141,6 +141,7 @@
                         <Button fx:id="btnSepia" prefHeight="30" prefWidth="30" mnemonicParsing="false"/>
                         <Button fx:id="btnInvert" prefHeight="30" prefWidth="30" mnemonicParsing="false"/>
                         <Button fx:id="btnMonochrome" prefHeight="30" prefWidth="30" mnemonicParsing="false"/>
+                        <Button fx:id="btnGlow" prefHeight="30" prefWidth="30" mnemonicParsing="false"/>
                     </items>
                 </ToolBar>
                 <ScrollPane prefHeight="700.0" prefWidth="1300.0">
