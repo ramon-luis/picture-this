@@ -1,4 +1,4 @@
-package imageShop;
+package pictureThis;
 
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;

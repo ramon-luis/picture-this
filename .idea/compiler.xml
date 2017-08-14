@@ -22,10 +22,12 @@
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
         <processorPath useClasspath="true" />
+        <module name="picture-this" />
         <module name="proImageShop" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
+      <module name="picture-this" target="1.8" />
       <module name="proImageShop" target="1.8" />
     </bytecodeTargetLevel>
   </component>

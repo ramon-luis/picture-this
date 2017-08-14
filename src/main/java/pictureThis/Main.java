@@ -1,4 +1,4 @@
-package imageShop;
+package pictureThis;
 
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;

@@ -1,4 +1,4 @@
-package imageShop;
+package pictureThis;
 
 import javafx.embed.swing.SwingFXUtils;
 import javafx.event.ActionEvent;

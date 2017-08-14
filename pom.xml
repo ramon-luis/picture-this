@@ -12,7 +12,7 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <mainClass>imageShop.Main</mainClass>
+        <mainClass>pictureThis.Main</mainClass>
     </properties>
 
     <organization>
