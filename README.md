@@ -2,7 +2,7 @@
 
 Pictures This is an image editing application that can be used to apply various visual effects and edits to user photos.  The program uses lambda expressions to take advantage of the functional programming capabilities of Java8.  
 
-![Picture This Screenshot 1](https://github.com/ramon-luis/picture-this/demo/picture-this-screenshot-1 "Picture This Screenshot 1")
+![Picture This Screenshot 1](https://github.com/ramon-luis/picture-this/demo/picture-this-screenshot-1.png "Picture This Screenshot 1")
 
 ## What's Here  
   * `Command Center.java` - manages the 'memory' of the application: original image, recent changes, recent files, etc.  
